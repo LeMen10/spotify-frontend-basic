@@ -1,0 +1,117 @@
+.music-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background-color: #000000;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 12%;
+}
+
+.music-card .controls {
+    display: flex;
+    align-items: center;
+}
+
+.music-card .controls i {
+    font-size: 20px;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+.music-card .progress {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.music-card .progress input {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.music-card .volume {
+    display: flex;
+    align-items: center;
+}
+
+.music-card .volume i {
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+
+
+
+
+// .music-player {
+//     background: #111;
+//     color: white;
+//     padding: 15px;
+//     width: 80%;
+//     display: flex;
+//     align-items: center;
+//     justify-content: space-between;
+//     border-radius: 10px;
+// }
+
+// .song-info {
+//     display: flex;
+//     align-items: center;
+//     gap: 10px;
+// }
+
+// .song-info img {
+//     width: 60px;
+//     border-radius: 5px;
+// }
+
+// .song-details h4 {
+//     margin: 0;
+//     font-size: 14px;
+// }
+
+// .song-details p {
+//     margin: 0;
+//     font-size: 12px;
+//     color: gray;
+// }
+
+// .fa-plus-circle {
+//     color: gray;
+//     cursor: pointer;
+// }
+
+// .controls {
+//     display: flex;
+//     align-items: center;
+//     gap: 15px;
+//     font-size: 20px;
+// }
+
+// .controls .fa {
+//     cursor: pointer;
+// }
+
+// .progress-bar {
+//     display: flex;
+//     align-items: center;
+//     gap: 10px;
+//     width: 40%;
+// }
+
+// .progress-bar input {
+//     width: 100%;
+// }
+
+// .extra-controls {
+//     display: flex;
+//     align-items: center;
+//     gap: 10px;
+// }
+
+// .volume {
+//     width: 80px;
+// }

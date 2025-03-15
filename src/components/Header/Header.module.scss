@@ -1,0 +1,74 @@
+.header .logo {
+    display: flex;
+    width: 21%;
+}
+
+.header .logo h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #FFFFFF;
+    width: 100%;
+    text-align: center;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #000000;
+}
+
+.header .search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #333333;
+    padding: 10px;
+    border-radius: 20px;
+    width: 300px;
+}
+
+.header .search-bar input {
+    border: none;
+    background: none;
+    color: #FFFFFF;
+    margin-left: 10px;
+    width: 100%;
+}
+
+.header .search-bar input::placeholder {
+    color: #B3B3B3;
+}
+
+.header .actions {
+    display: flex;
+    align-items: center;
+}
+
+.header .actions button {
+    background-color: #FFFFFF;
+    color: #000000;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.header .actions .user {
+    display: flex;
+    align-items: center;
+    background-color: #00d568;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-left: 10px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.wrap-actions{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 64%;
+}
