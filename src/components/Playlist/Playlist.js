@@ -1,43 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Playlist.module.scss';
-import request from '~/utils/request';
-import { useNavigate } from 'react-router-dom';
+// import request from '~/utils/request';
+// import { useNavigate } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
-const Playlist = ({ onSelectContact, searchQuery }) => {
-    const [contacts, setContacts] = useState([]);
-    const navigate = useNavigate();
+const Playlist = () => {
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await request.get(`/api/users`);
-                setContacts(res.data);
-            } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
-            }
-        };
-        fetchUsers();
-    }, [navigate]);
+    // useEffect(() => {
+    //     const fetchUsers = async () => {
+    //         try {
+    //             const res = await request.get(`/api/users`);
+    //             setContacts(res.data);
+    //         } catch (error) {
+    //             if (error.response?.status === 401) navigate('/login');
+    //         }
+    //     };
+    //     fetchUsers();
+    // }, [navigate]);
 
-    useEffect(() => {
-        const fetchFilteredContacts = async () => {
-            try {
-                const res = await request.get(`/api/users`, { params: { search: searchQuery } });
-                setContacts(res.data);
-            } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
-            }
-        };
-        fetchFilteredContacts();
-    }, [searchQuery, navigate]);
 
     return (
         <>
             <div className={cx('playlist')}>
-                <div className={cx('menu-item active')}>
+                <div className={cx('menu-item', 'active')}>
                     <i className={cx('fas fa-home')}></i>
                     <span>Home</span>
                 </div>

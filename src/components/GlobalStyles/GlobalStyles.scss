@@ -44,6 +44,8 @@ body {
     text-rendering: optimizespeed;
     color: var(--text-color);
     overflow-y: overlay;
+    background-color: #000000;
+    color: #ffffff;
 }
 
 //scrollbar css
@@ -95,7 +97,8 @@ input:focus {
     margin-top: 60px;
 }
 .content {
-    margin-top: calc(var(--height-header) + 40px);
+    // margin-top: calc(var(--height-header) + 40px);
+    background-color: #131313;
 }
 .modal {
     position: fixed;
