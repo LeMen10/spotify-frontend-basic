@@ -18,18 +18,20 @@ input::placeholder {
 .wrapper {
     position: fixed;
     font-family: var(--font-family-quicksand);
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 71%;
     display: flex;
+    z-index: 1000;
+    width: 380px;
 }
 .container {
-    width: 58%;
+    width: 90%;
     height: 80%;
-    margin: auto;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
+    margin: auto auto 0;
+    background: #ffffff;
+    border-radius: 4px;
     display: flex;
     overflow: hidden;
 }

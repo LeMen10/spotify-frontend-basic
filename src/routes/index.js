@@ -4,7 +4,7 @@ import Register from "~/pages/Register/Register"
 
 const publicRouter = [
     {path: '/login', component: Login, layout: null},
-    {path: '/', component: Home, layout: null},
+    {path: '/', component: Home},
     {path: '/register', component: Register, layout: null},
 ]
 

@@ -1,3 +1,14 @@
 // .content {
 //     margin-top: calc(var(--height-header) + 26px); 
 // }
+
+.container {
+    display: flex;
+    max-height: 466px;
+}
+
+.content{
+    border-radius: 10px;
+    margin: 0 4px;
+    max-height: 466px;
+}

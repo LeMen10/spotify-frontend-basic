@@ -26,17 +26,17 @@ const Message = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
 
-    useEffect(() => {
-            const fetchUsers = async () => {
-                try {
-                    const res = await request.get(`/api/users`);
-                    console.log(res.data);
-                } catch (error) {
-                    // if (error.response?.status === 401) navigate('/login');
-                }
-            };
-            fetchUsers();
-        }, []);
+    // useEffect(() => {
+    //         const fetchUsers = async () => {
+    //             try {
+    //                 const res = await request.get(`/api/users`);
+    //                 console.log(res.data);
+    //             } catch (error) {
+    //                 // if (error.response?.status === 401) navigate('/login');
+    //             }
+    //         };
+    //         fetchUsers();
+    //     }, []);
         
     useEffect(() => {
         if (!socket) return;
@@ -126,7 +126,7 @@ const Message = () => {
     return (
         <div className={cx('wrapper')}>
             <div className={cx('container')}>
-                <div className={cx('sidebar')}>
+                {/* <div className={cx('sidebar')}>
                     <Search onSearch={handleSearch} />
                     <div className={cx('contacts')}>
                         <Contact onSelectContact={handleSelectContact} searchQuery={searchQuery}/>
@@ -135,7 +135,7 @@ const Message = () => {
                         <i className={cx('fas fa-sign-out-alt')}> </i>
                         <FontAwesomeIcon className={cx('icon-user')} icon={faSignOut} />
                     </div>
-                </div>
+                </div> */}
                 <div className={cx('main')}>
                     {!selectedConversation ? (
                         <NoChatSelected fullName={userInformation.fullName} />
