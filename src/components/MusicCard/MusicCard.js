@@ -44,12 +44,12 @@ const MusicCard = ({ onSelectContact, searchQuery }) => {
                 </div>
                 <div className={cx('progress')}>
                     <span>0:00</span>
-                    <input max="100" min="0" type="range" value="0" />
+                    {/* <input max="100" min="0" type="range" value="0" /> */}
                     <span>3:45</span>
                 </div>
                 <div className={cx('volume')}>
                     <i className={cx('fas fa-volume-up')}></i>
-                    <input max="100" min="0" type="range" value="50" />
+                    {/* <input max="100" min="0" type="range" value="50" /> */}
                 </div>
             </div>
 

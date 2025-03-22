@@ -1,16 +1,36 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Header.module.scss';
-// import request from '~/utils/request';
-// import { useNavigate } from 'react-router-dom';
+import request from '~/utils/request';
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const cx = classNames.bind(styles);
 
-const Header = ({ setCheckOnClickChat }) => {
-    // const navigate = useNavigate();
+const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
+    const navigate = useNavigate();
+    const [user, setUser] = useState();
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await request.get(`/api/user/get-user`);
+                setUser(res.data.user);
+            } catch (error) {}
+        })();
+    }, [navigate]);
 
     const handleClick = () => {
-        setCheckOnClickChat(prev => !prev);
+        setCheckOnClickChat(() => true);
+    };
+
+    const handleClickGemini = () => {
+        setCheckOnClickChatGemini(() => true);
+    };
+
+    const handleLogout = () => {
+        Cookies.remove('token');
+        window.location.reload();
     };
 
     return (
@@ -27,10 +47,28 @@ const Header = ({ setCheckOnClickChat }) => {
                     <div className={cx('actions')}>
                         <button>Khám phá Premium</button>
                         <button>Cài đặt Ứng dụng</button>
-                        <div className={cx('user')}>
-                            <i className={cx('fas fa-user-circle')}></i>
-                            <span onClick={handleClick}>V</span>
-                        </div>
+                        {user && (
+                            <div className={cx('user')}>
+                                <span onClick={handleClick} className={cx('logged')}>
+                                    {/* {user ? <img alt="User profile" src={user.profile_pic} /> : <span></span>} */}
+                                    {user.username[0].toUpperCase()}
+                                </span>
+
+                                <div className={cx('logged-dropdown-wrap')}>
+                                    <ul className={cx('logged-dropdown-list')}>
+                                        <li onClick={handleClick} className={cx('logged-dropdown-item')}>
+                                            <div className={cx('logged-dropdown-item-content')}>General chat </div>
+                                        </li>
+                                        <li onClick={handleClickGemini} className={cx('logged-dropdown-item')}>
+                                            <div className={cx('logged-dropdown-item-content')}>Gemini AI</div>
+                                        </li>
+                                        <li onClick={handleLogout} className={cx('logged-dropdown-item')}>
+                                            <div className={cx('logged-dropdown-item-content')}>Log Out</div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

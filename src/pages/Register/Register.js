@@ -37,16 +37,24 @@ const Register = () => {
     };
 
     const handleSubmit = () => {
-        const data = { fullName, username, password, confirmPassword, email, gender };
+        const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
+        const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+        const data = {
+            fullName,
+            username,
+            password,
+            email,
+            profile_pic: gender === 'male' ? boyProfilePic : girlProfilePic,
+        };
         axios
-            .post(`${process.env.REACT_APP_BASE_URL}/api/auth/signup`, data)
+            .post(`${process.env.REACT_APP_BASE_URL}api/auth/register`, data)
             .then((res) => {
                 if (res.status === 201) navigate('/login');
             })
             .catch((error) => {
+                console.log(error.response);
                 const err = error.response.data.error;
-                if (err === "Passwords don't match") toastCustom("Passwords don't match");
-                if (err === 'Username already exists') toastCustom('Username already exists');
+                if (err === 'username already exists') toastCustom('Username already exists');
             });
     };
 
@@ -87,7 +95,7 @@ const Register = () => {
                                             name="fullname"
                                             placeholder="Fullname"
                                             className={cx('auth-form__input')}
-                                            id="auth-form__username"
+                                            id="auth-form__fullname"
                                             value={fullName}
                                             onChange={(e) => setFullname(e.target.value)}
                                         />
@@ -98,7 +106,7 @@ const Register = () => {
                                             type="text"
                                             autocomplete="off"
                                             name="username"
-                                            placeholder="Username"
+                                            placeholder="username"
                                             className={cx('auth-form__input')}
                                             id="auth-form__username"
                                             value={username}
@@ -114,7 +122,7 @@ const Register = () => {
                                             type="password"
                                             autocomplete="off"
                                             name="password"
-                                            placeholder="Password"
+                                            placeholder="password"
                                             className={cx('auth-form__input')}
                                             id="auth-form__password"
                                             value={password}
@@ -126,7 +134,7 @@ const Register = () => {
                                         <input
                                             type="password"
                                             name="Confirm password"
-                                            placeholder="Confirm password"
+                                            placeholder="confirm password"
                                             className={cx('auth-form__input')}
                                             id="auth-form__confirm-password"
                                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -141,7 +149,7 @@ const Register = () => {
                                             type="text"
                                             autocomplete="off"
                                             name="email"
-                                            placeholder="Email"
+                                            placeholder="email"
                                             className={cx('auth-form__input')}
                                             id="auth-form__email"
                                             value={email}
@@ -176,11 +184,11 @@ const Register = () => {
 
                             <div className={cx('auth-form__aside')}>
                                 <p className={cx('auth-form__policy-text')}>
-                                    By signing up, you agree to Chat app's terms of use {' '}
+                                    By signing up, you agree to Chat app's terms of use{' '}
                                     <Link to={''} className={cx('auth-form__text-link')}>
                                         Terms of Service
                                     </Link>{' '}
-                                    & {' '}
+                                    &{' '}
                                     <Link to={''} className={cx('auth-form__text-link')}>
                                         Privacy Policy
                                     </Link>
@@ -195,7 +203,12 @@ const Register = () => {
                                     className={cx('btn btn--primary', 'view-cart')}
                                     onClick={handleSubmit}
                                     disabled={
-                                        !username || !fullName || !password || !confirmPassword || !email || !gender
+                                        !username ||
+                                        !password ||
+                                        !confirmPassword ||
+                                        !email ||
+                                        !gender ||
+                                        password !== confirmPassword
                                     }
                                 >
                                     OK
