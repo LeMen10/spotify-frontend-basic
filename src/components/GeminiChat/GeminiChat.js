@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import className from 'classnames/bind';
-import styles from './Message.module.scss';
+import styles from './GeminiChat.module.scss';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import Contact from '~/components/Contact/Contact';
@@ -13,7 +13,7 @@ import Search from '~/components/Search/Search';
 
 const cx = className.bind(styles);
 
-const Message = ({ setCheckOnClickChat }) => {
+const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const navigate = useNavigate();
     const [selectedConversation, setSelectedConversation] = useState(39);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -134,7 +134,7 @@ const Message = ({ setCheckOnClickChat }) => {
     const groupName = messages.length > 0 ? messages[0].group_name : null;
 
     const closeMessage = () => {
-        setCheckOnClickChat((prev) => !prev);
+        setCheckOnClickChatGemini((prev) => !prev);
     };
 
     return (
@@ -143,7 +143,7 @@ const Message = ({ setCheckOnClickChat }) => {
                 <div className={cx('main')}>
                     <div className={cx('chat-container')}>
                         <div className={cx('header')}>
-                            <span>to: {groupName}</span>
+                            <span>to: Gemini</span>
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>
@@ -210,24 +210,7 @@ const Message = ({ setCheckOnClickChat }) => {
                                     }
                                 }}
                             />
-                            <FontAwesomeIcon
-                                className={cx('icon-smile')}
-                                icon={faSmile}
-                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            />
 
-                            {showEmojiPicker && (
-                                <div className={cx('emoji-picker-container')}>
-                                    <EmojiPicker
-                                        previewConfig={{ showPreview: false }}
-                                        searchDisabled={true}
-                                        skinTonesDisabled={true}
-                                        onEmojiClick={handleEmojiClick}
-                                        height="300px"
-                                        theme="dark"
-                                    />
-                                </div>
-                            )}
                             <FontAwesomeIcon
                                 className={cx('icon-paper-plane')}
                                 icon={faPaperPlane}
@@ -241,27 +224,4 @@ const Message = ({ setCheckOnClickChat }) => {
     );
 };
 
-export default Message;
-
-const NoChatSelected = ({ fullName }) => {
-    return (
-        <>
-            <div className={cx('welcome')}>
-                Welcome
-                <span aria-label="wave" role="img">
-                    {' '}
-                    👋{' '}
-                </span>
-                {fullName}
-                <span aria-label="snowflake" role="img">
-                    {' '}
-                    ❄️{' '}
-                </span>
-            </div>
-            <div className={cx('select-chat')}>Select a chat to start messaging</div>
-            <div className={cx('chat-icon')}>
-                <i className={cx('fas fa-comments')}> </i>
-            </div>
-        </>
-    );
-};
+export default GeminiChat;

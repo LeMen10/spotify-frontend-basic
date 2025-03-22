@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import PropTypes from 'prop-types';
 
-const token = Cookies.get('token');
+const token = Cookies.get("token");
 
 const request = axios.create({
     headers: {

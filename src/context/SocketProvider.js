@@ -10,17 +10,17 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     
-    useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user) return;
-        const newSocket = io("http://localhost:5000", {
-            query: { userId: user._id },
-        });
+    // useEffect(() => {
+    //     const user = JSON.parse(localStorage.getItem("user"));
+    //     if (!user) return;
+    //     const newSocket = io("http://localhost:5000", {
+    //         query: { userId: user._id },
+    //     });
 
-        setSocket(newSocket);
+    //     setSocket(newSocket);
 
-        return () => newSocket.close();
-    }, []);
+    //     return () => newSocket.close();
+    // }, []);
 
     return (
         <SocketContext.Provider value={socket}>
