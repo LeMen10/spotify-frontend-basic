@@ -136,7 +136,7 @@ input::placeholder {
 }
 .full-name{
     font-size: 12px;
-    margin-left: 15%;
+    margin-left: 4%;
     margin-bottom: 2px;
 }
 
@@ -144,13 +144,22 @@ input::placeholder {
     background: #1f1f1f;
     color: white;
 }
+
+.msg-wr{
+    display: flex;
+    align-items: end;
+}
+
 .text {
     padding: 6px 10px;
     font-size: 14px;
     border-radius: 18px;
-    max-width: 62%;
+    max-width: 70%;
     text-align: left;
     font-weight: 500;
+    display: inline-block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .timestamp {
@@ -226,4 +235,18 @@ input::placeholder {
 
 .contacts{
     overflow-y: auto;
+}
+
+.no-message{
+    display: flex;
+    height: 100%;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: center;
+}
+
+.no-message span{
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 16px;
 }

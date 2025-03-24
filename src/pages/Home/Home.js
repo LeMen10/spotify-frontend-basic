@@ -14,15 +14,19 @@ import Search from '~/components/Search/Search';
 const cx = className.bind(styles);
 
 const Home = () => {
-    // const fetchUsers = async () => {
-    //     try {
-    //         const res = await request.get(`/api/user/get-users`);
-    //         console.log(res.data);
-    //     } catch (error) {
-    //         // if (error.response?.status === 401) navigate('/login');
-    //     }
-    // };
-    // fetchUsers();
+    const navigate = useNavigate();
+    useEffect(() => {
+        const num = JSON.parse(localStorage.getItem('num'));
+        if (num) return;
+        (async () => {
+            try {
+                const res = await request.get(`/api/user/get-user`);
+                localStorage.setItem("num", res.data.user.id);
+            } catch (error) {
+                if (error.response?.status === 401) navigate('/login');
+            }
+        })();
+    }, [navigate]);
 
     return (
         <div className={cx('main-content')}>

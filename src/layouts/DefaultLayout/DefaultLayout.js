@@ -18,10 +18,10 @@ const DefaultLayout = ({ children }) => {
     const [checkOnClickChatGemini, setCheckOnClickChatGemini] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const token = Cookies.get('token');
-    console.log(isLoading);
+    // console.log(isLoading);
 
     useEffect(() => {
-        console.log('Component Mounted');
+        // console.log('Component Mounted');
         setTimeout(() => {
             setIsLoading(false);
         }, 3000);

@@ -144,13 +144,21 @@ input::placeholder {
     background: #1f1f1f;
     color: white;
 }
+
+.msg-wr{
+    display: flex;
+    align-items: end;
+}
 .text {
     padding: 6px 10px;
     font-size: 14px;
     border-radius: 18px;
-    max-width: 62%;
+    max-width: 70%;
     text-align: left;
     font-weight: 500;
+    display: inline-block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .timestamp {

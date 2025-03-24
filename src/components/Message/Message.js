@@ -58,9 +58,9 @@ const Message = ({ setCheckOnClickChat }) => {
         setIsLoadingMessages(true);
         (async () => {
             try {
-                const res = await request.get(`/api/message/get-messages`);
-                console.log(res);
-                setMessages(res.data);
+                const res = await request.get(`/api/message/get-messages-general-chat`);
+                console.log(res.data);
+                setMessages(res.data.messages);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
             } finally {
@@ -129,9 +129,8 @@ const Message = ({ setCheckOnClickChat }) => {
         setSearchQuery(query);
     };
 
-    const user = JSON.parse(localStorage.getItem('user'));
-    console.log('User:', user);
-    const groupName = messages.length > 0 ? messages[0].group_name : null;
+    // const user = JSON.parse(localStorage.getItem('user'));
+    // console.log('User:', user);
 
     const closeMessage = () => {
         setCheckOnClickChat((prev) => !prev);
@@ -143,7 +142,7 @@ const Message = ({ setCheckOnClickChat }) => {
                 <div className={cx('main')}>
                     <div className={cx('chat-container')}>
                         <div className={cx('header')}>
-                            <span>to: {groupName}</span>
+                            <span>to: General chat</span>
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>
@@ -152,6 +151,7 @@ const Message = ({ setCheckOnClickChat }) => {
                                     <div className={cx('spinner')}></div>
                                 </div>
                             ) : (
+                                messages.length > 0 &&
                                 messages.map((msg) => (
                                     <div key={msg.id} onClick={() => handleSelectMessage(msg.id)}>
                                         {selectedMessageId === msg.id && (
@@ -173,7 +173,7 @@ const Message = ({ setCheckOnClickChat }) => {
                                                     <span className={cx('full-name')}>
                                                         {msg.fullname.trim().split(' ').pop()}
                                                     </span>
-                                                    <div>
+                                                    <div className={cx('msg-wr')}>
                                                         <img
                                                             alt="User profile"
                                                             src={msg.profile_pic || 'https://placehold.co/30x30'}
