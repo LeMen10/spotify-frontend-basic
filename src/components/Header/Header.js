@@ -49,7 +49,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                         <button>Cài đặt Ứng dụng</button>
                         {user && (
                             <div className={cx('user')}>
-                                <span onClick={handleClick} className={cx('logged')}>
+                                <span className={cx('logged')}>
                                     {/* {user ? <img alt="User profile" src={user.profile_pic} /> : <span></span>} */}
                                     {user.username[0].toUpperCase()}
                                 </span>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import className from 'classnames/bind';
 import styles from './GeminiChat.module.scss';
 import Cookies from 'js-cookie';
@@ -16,29 +17,19 @@ const cx = className.bind(styles);
 const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const navigate = useNavigate();
     const [selectedConversation, setSelectedConversation] = useState(39);
-    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [messages, setMessages] = useState([]);
-    console.log(messages);
+    const [messageUpdated, setMessageUpdated] = useState(false);
+    console.log('Messages: ', messages, 'Length: ', messages?.length);
 
     const [messageContent, setMessageContent] = useState('');
-    const userInformation = JSON.parse(localStorage.getItem('user')) || '';
     const socket = useSocket();
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
 
-    // useEffect(() => {
-    //         const fetchUsers = async () => {
-    //             try {
-    //                 const res = await request.get(`/api/users`);
-    //                 console.log(res.data);
-    //             } catch (error) {
-    //                 // if (error.response?.status === 401) navigate('/login');
-    //             }
-    //         };
-    //         fetchUsers();
-    //     }, []);
+    const num = JSON.parse(localStorage.getItem('num'));
 
     useEffect(() => {
         if (!socket) return;
@@ -55,12 +46,12 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
 
     useEffect(() => {
         // if (!selectedConversation) return;
-        setIsLoadingMessages(true);
+        // setIsLoadingMessages(true);
         (async () => {
             try {
-                const res = await request.get(`/api/message/get-messages`);
-                console.log(res);
-                setMessages(res.data);
+                const res = await request.get(`/api/message/get-messages-gemini`);
+                console.log(res.data.messages);
+                setMessages(res.data.messages);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
             } finally {
@@ -69,69 +60,49 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                 }, 2000);
             }
         })();
-    }, [navigate]);
+    }, [navigate, messageUpdated]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
     }, [messages]);
 
+    const API_URL =
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBPB_46tPAls-foDHYB87dfpj6jtNV6-Bw';
+
     const sendMessage = async () => {
-        if (showEmojiPicker) setShowEmojiPicker(!showEmojiPicker);
-        if (!messageContent.trim()) return;
-        const data = { message: messageContent.trim() };
+
+        const newMessages = [{ sender: parseInt(num), content: messageContent.trim() }];
         setMessageContent('');
+
         try {
-            const res = await request.post(`/api/messages/send/${selectedConversation._id}`, data);
-            const newMessage = res.data?.message;
-            if (!newMessage || typeof newMessage !== 'object' || !newMessage._id) return;
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-            if (socket) socket.emit('sendMessage', res.data);
+            const response = await axios.post(API_URL, {
+                contents: [{ parts: [{ text: messageContent }] }],
+            });
+
+            const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'Lỗi';
+            const updatedMessages = [...newMessages, { sender: 'Gemini', content: reply }];
+
+            await saveMessagesToDB(updatedMessages);
         } catch (error) {
-            if (error.response?.status === 401) navigate('/login');
+            console.error('Lỗi gọi API Gemini:', error);
+            setMessages([...newMessages, { sender: 'Gemini', content: 'Lỗi khi gửi tin nhắn.' }]);
         }
     };
 
-    const handleEmojiClick = (emojiObject) => {
-        const input = inputRef.current;
-        if (!input) return;
-
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const textBefore = messageContent.substring(0, start);
-        const textAfter = messageContent.substring(end);
-        const newText = textBefore + emojiObject.emoji + textAfter;
-
-        setMessageContent(newText);
-        setTimeout(() => {
-            input.focus();
-            input.setSelectionRange(start + emojiObject.emoji.length, start + emojiObject.emoji.length);
-        }, 0);
-    };
-
-    const handleLogout = () => {
-        Cookies.remove('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
-
-    const handleSelectContact = (contact) => {
-        setSelectedConversation(contact);
-        setIsLoadingMessages(true);
+    const saveMessagesToDB = async (messages) => {
+        console.log('Lưu tin nhắn:', messages);
+        try {
+            const res = await request.post('/api/message/save-messages-gemini', { messages });
+            console.log('Lưu tin nhắn thành công:', res);
+            setMessageUpdated((prev) => !prev);
+        } catch (error) {
+            console.error('Lỗi lưu tin nhắn:', error);
+        }
     };
 
     const handleSelectMessage = (id) => {
         setSelectedMessageId(selectedMessageId === id ? null : id);
     };
-
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const handleSearch = (query) => {
-        setSearchQuery(query);
-    };
-
-    const user = JSON.parse(localStorage.getItem('user'));
-    console.log('User:', user);
-    const groupName = messages.length > 0 ? messages[0].group_name : null;
 
     const closeMessage = () => {
         setCheckOnClickChatGemini((prev) => !prev);
@@ -147,21 +118,26 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>
-                            {isLoadingMessages ? (
+                            {isLoadingMessages && (
                                 <div className={cx('spinner-wr')}>
                                     <div className={cx('spinner')}></div>
+                                </div>
+                            )}
+                            {!messages.length ? (
+                                <div className={cx('no-message')}>
+                                    <span>Tôi có thể giúp được gì cho bạn ??</span>
                                 </div>
                             ) : (
                                 messages.map((msg) => (
                                     <div key={msg.id} onClick={() => handleSelectMessage(msg.id)}>
-                                        {selectedMessageId === msg.id && (
+                                        {/* {selectedMessageId === msg.id && (
                                             <span className={cx('timestamp')}>
                                                 {new Date(msg.timestamp).toLocaleTimeString([], {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
                                                 })}
                                             </span>
-                                        )}
+                                        )} */}
                                         <div
                                             className={cx(
                                                 'message',
@@ -173,11 +149,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                                                     <span className={cx('full-name')}>
                                                         {msg.fullname.trim().split(' ').pop()}
                                                     </span>
-                                                    <div>
-                                                        <img
-                                                            alt="User profile"
-                                                            src={msg.profile_pic || 'https://placehold.co/30x30'}
-                                                        />
+                                                    <div className={cx('msg-wr')}>
                                                         <span className={cx('text')}>{msg.content}</span>
                                                     </div>
                                                 </>
@@ -188,7 +160,6 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                                     </div>
                                 ))
                             )}
-
                             <div ref={messagesEndRef}></div>
                         </div>
 
