@@ -8,7 +8,7 @@
     --height-header: 124px;
     --white-color: #fff;
     --black-color: #000;
-    --text-color: #253d4e;
+    --text-color: #ffffff;
     --border-color: #dbdbdb;
     --font-family-quicksand: 'Quicksand', sans-serif;
 }
@@ -44,8 +44,6 @@ body {
     text-rendering: optimizespeed;
     color: var(--text-color);
     overflow-y: overlay;
-    background-color: #000000;
-    color: #ffffff;
 }
 
 //scrollbar css
@@ -97,8 +95,7 @@ input:focus {
     margin-top: 60px;
 }
 .content {
-    // margin-top: calc(var(--height-header) + 40px);
-    background-color: #131313;
+    margin-top: calc(var(--height-header) + 40px);
 }
 .modal {
     position: fixed;

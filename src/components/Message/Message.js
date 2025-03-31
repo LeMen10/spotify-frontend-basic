@@ -1,93 +1,145 @@
 import { useState, useEffect, useRef } from 'react';
 import className from 'classnames/bind';
 import styles from './Message.module.scss';
-import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-import Contact from '~/components/Contact/Contact';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOut, faPaperPlane, faSmile, faClose } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faSmile, faClose } from '@fortawesome/free-solid-svg-icons';
 import EmojiPicker from 'emoji-picker-react';
 import request from '~/utils/request';
-import { useSocket } from '~/context/SocketProvider';
-import Search from '~/components/Search/Search';
+import Cookies from 'js-cookie';
 
 const cx = className.bind(styles);
 
 const Message = ({ setCheckOnClickChat }) => {
     const navigate = useNavigate();
-    const [selectedConversation, setSelectedConversation] = useState(39);
+    const [user, setUser] = useState();
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [messages, setMessages] = useState([]);
-    console.log(messages);
-
     const [messageContent, setMessageContent] = useState('');
-    const userInformation = JSON.parse(localStorage.getItem('user')) || '';
-    const socket = useSocket();
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const [conversationId, setConversationId] = useState(null);
+    const [socket, setSocket] = useState();
 
-    // useEffect(() => {
-    //         const fetchUsers = async () => {
-    //             try {
-    //                 const res = await request.get(`/api/users`);
-    //                 console.log(res.data);
-    //             } catch (error) {
-    //                 // if (error.response?.status === 401) navigate('/login');
-    //             }
-    //         };
-    //         fetchUsers();
-    //     }, []);
+    useEffect(() => {
+        const token = Cookies.get('token');
+        const wsUrl = `ws://localhost:8000/ws/chat/General/`;
+
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            console.log('WebSocket Connected');
+            socket.send(
+                JSON.stringify({
+                    type: 'auth',
+                    token: token,
+                }),
+            );
+            setSocket(socket);
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket Disconnected');
+            setSocket(null);
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+        };
+
+        return () => {
+            socket.close();
+        };
+    }, [conversationId]);
 
     useEffect(() => {
         if (!socket) return;
-        const handleNewMessage = (newMessage) => {
-            if (!newMessage || typeof newMessage !== 'object') return;
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        const handleSocketMessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (JSON.parse(event.data).error === "Missing required fields in message data") return
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: data.message_id,
+                    content: data.message,
+                    sender_id: data.sender_id,
+                    timestamp: data.timestamp,
+                    fullname: data.sender_fullname,
+                    profile_pic: data.profile_pic || 'https://placehold.co/30x30',
+                },
+            ]);
         };
 
-        socket.on('newMessage', handleNewMessage);
+        socket.onmessage = handleSocketMessage;
         return () => {
-            socket.off('newMessage', handleNewMessage);
+            socket.onmessage = null;
         };
     }, [socket]);
 
     useEffect(() => {
-        // if (!selectedConversation) return;
         setIsLoadingMessages(true);
         (async () => {
             try {
                 const res = await request.get(`/api/message/get-messages-general-chat`);
-                console.log(res.data);
                 setMessages(res.data.messages);
+                setTimeout(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+                }, 0);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
             } finally {
                 setTimeout(() => {
                     setIsLoadingMessages(false);
                 }, 2000);
+                
             }
         })();
     }, [navigate]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await request.get(`/api/user/get-user`);
+                setUser(res.data.user);
+            } catch (error) {}
+        })();
+    }, [navigate]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await request.get(`/api/conversation/get-conversation`);
+                setConversationId(res.data[0].id);
+            } catch (error) {}
+        })();
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
     }, [messages]);
 
     const sendMessage = async () => {
-        if (showEmojiPicker) setShowEmojiPicker(!showEmojiPicker);
-        if (!messageContent.trim()) return;
-        const data = { message: messageContent.trim() };
-        setMessageContent('');
+        if (showEmojiPicker) setShowEmojiPicker(false);
+        if (!messageContent.trim() || !user || !conversationId) return;
+
+        const messageData = {
+            message: messageContent.trim(),
+            sender_id: user.id,
+            conversation_id: conversationId,
+        };
+
         try {
-            const res = await request.post(`/api/messages/send/${selectedConversation._id}`, data);
-            const newMessage = res.data?.message;
-            if (!newMessage || typeof newMessage !== 'object' || !newMessage._id) return;
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-            if (socket) socket.emit('sendMessage', res.data);
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(messageData));
+                setMessageContent('');
+            } else {
+                console.error('WebSocket is not connected');
+            }
         } catch (error) {
-            if (error.response?.status === 401) navigate('/login');
+            console.error('Error sending message:', error);
         }
     };
 
@@ -108,29 +160,9 @@ const Message = ({ setCheckOnClickChat }) => {
         }, 0);
     };
 
-    const handleLogout = () => {
-        Cookies.remove('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
-
-    const handleSelectContact = (contact) => {
-        setSelectedConversation(contact);
-        setIsLoadingMessages(true);
-    };
-
     const handleSelectMessage = (id) => {
         setSelectedMessageId(selectedMessageId === id ? null : id);
     };
-
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const handleSearch = (query) => {
-        setSearchQuery(query);
-    };
-
-    // const user = JSON.parse(localStorage.getItem('user'));
-    // console.log('User:', user);
 
     const closeMessage = () => {
         setCheckOnClickChat((prev) => !prev);
@@ -165,10 +197,10 @@ const Message = ({ setCheckOnClickChat }) => {
                                         <div
                                             className={cx(
                                                 'message',
-                                                msg.sender_id === selectedConversation ? 'sent' : 'received',
+                                                msg.sender_id === parseInt(user.id) ? 'sent' : 'received',
                                             )}
                                         >
-                                            {msg.sender_id !== selectedConversation ? (
+                                            {msg.sender_id !== parseInt(user.id) ? (
                                                 <>
                                                     <span className={cx('full-name')}>
                                                         {msg.fullname.trim().split(' ').pop()}
@@ -242,26 +274,3 @@ const Message = ({ setCheckOnClickChat }) => {
 };
 
 export default Message;
-
-const NoChatSelected = ({ fullName }) => {
-    return (
-        <>
-            <div className={cx('welcome')}>
-                Welcome
-                <span aria-label="wave" role="img">
-                    {' '}
-                    👋{' '}
-                </span>
-                {fullName}
-                <span aria-label="snowflake" role="img">
-                    {' '}
-                    ❄️{' '}
-                </span>
-            </div>
-            <div className={cx('select-chat')}>Select a chat to start messaging</div>
-            <div className={cx('chat-icon')}>
-                <i className={cx('fas fa-comments')}> </i>
-            </div>
-        </>
-    );
-};

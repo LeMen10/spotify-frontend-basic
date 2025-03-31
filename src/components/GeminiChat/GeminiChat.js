@@ -2,26 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import className from 'classnames/bind';
 import styles from './GeminiChat.module.scss';
-import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-import Contact from '~/components/Contact/Contact';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOut, faPaperPlane, faSmile, faClose } from '@fortawesome/free-solid-svg-icons';
-import EmojiPicker from 'emoji-picker-react';
+import { faPaperPlane, faClose } from '@fortawesome/free-solid-svg-icons';
 import request from '~/utils/request';
 import { useSocket } from '~/context/SocketProvider';
-import Search from '~/components/Search/Search';
 
 const cx = className.bind(styles);
 
 const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const navigate = useNavigate();
-    const [selectedConversation, setSelectedConversation] = useState(39);
+    const [user, setUser] = useState();
+    console.log(user);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [messages, setMessages] = useState([]);
     const [messageUpdated, setMessageUpdated] = useState(false);
-    console.log('Messages: ', messages, 'Length: ', messages?.length);
-
     const [messageContent, setMessageContent] = useState('');
     const socket = useSocket();
     const messagesEndRef = useRef(null);
@@ -29,7 +24,14 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [selectedMessageId, setSelectedMessageId] = useState(null);
 
-    const num = JSON.parse(localStorage.getItem('num'));
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await request.get(`/api/user/get-user`);
+                setUser(res.data.user);
+            } catch (error) {}
+        })();
+    }, [navigate]);
 
     useEffect(() => {
         if (!socket) return;
@@ -70,8 +72,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBPB_46tPAls-foDHYB87dfpj6jtNV6-Bw';
 
     const sendMessage = async () => {
-
-        const newMessages = [{ sender: parseInt(num), content: messageContent.trim() }];
+        const newMessages = [{ sender: parseInt(user.id), content: messageContent.trim() }];
         setMessageContent('');
 
         try {
@@ -141,10 +142,10 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                                         <div
                                             className={cx(
                                                 'message',
-                                                msg.sender_id === selectedConversation ? 'sent' : 'received',
+                                                msg.sender_id === parseInt(user.id) ? 'sent' : 'received',
                                             )}
                                         >
-                                            {msg.sender_id !== selectedConversation ? (
+                                            {msg.sender_id !== parseInt(user.id) ? (
                                                 <>
                                                     <span className={cx('full-name')}>
                                                         {msg.fullname.trim().split(' ').pop()}
