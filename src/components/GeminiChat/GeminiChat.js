@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faClose } from '@fortawesome/free-solid-svg-icons';
 import request from '~/utils/request';
-import { useSocket } from '~/context/SocketProvider';
 
 const cx = className.bind(styles);
 
@@ -18,7 +17,6 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const [messages, setMessages] = useState([]);
     const [messageUpdated, setMessageUpdated] = useState(false);
     const [messageContent, setMessageContent] = useState('');
-    const socket = useSocket();
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -32,19 +30,6 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
             } catch (error) {}
         })();
     }, [navigate]);
-
-    useEffect(() => {
-        if (!socket) return;
-        const handleNewMessage = (newMessage) => {
-            if (!newMessage || typeof newMessage !== 'object') return;
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-        };
-
-        socket.on('newMessage', handleNewMessage);
-        return () => {
-            socket.off('newMessage', handleNewMessage);
-        };
-    }, [socket]);
 
     useEffect(() => {
         // if (!selectedConversation) return;
