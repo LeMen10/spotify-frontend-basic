@@ -2,11 +2,16 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: #131313;
-    height: 100%;
-    border-radius: 12px;
+}
+
+.sidebar .logout {
+    text-align: center;
+    margin-top: 20px;
+}
+.sidebar .logout i {
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
 }
 
 .main-content .search-bar {

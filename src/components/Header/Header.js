@@ -30,6 +30,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
 
     const handleLogout = () => {
         Cookies.remove('token');
+        localStorage.removeItem('num');
         window.location.reload();
     };
 

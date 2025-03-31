@@ -1,3 +1,4 @@
+// import Message from "~/pages/Message/Message"
 import Home from "~/pages/Home/Home"
 import Login from "~/pages/Login/Login"
 import Register from "~/pages/Register/Register"
