@@ -1,23 +1,23 @@
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 import className from 'classnames/bind';
 import styles from './Home.module.scss';
-import request from '~/utils/request';
+// import request from '~/utils/request';
 
 const cx = className.bind(styles);
 
 const Home = ({ onSelectContact }) => {
 
-    useEffect(() => {
-            const fetchUsers = async () => {
-                try {
-                    const res = await request.get(`/api/users`);
-                    console.log(res.data);
-                } catch (error) {
-                    // if (error.response?.status === 401) navigate('/login');
-                }
-            };
-            fetchUsers();
-        }, []);
+    // useEffect(() => {
+    //         const fetchUsers = async () => {
+    //             try {
+    //                 const res = await request.get(`/api/users`);
+    //                 console.log(res.data);
+    //             } catch (error) {
+    //                 // if (error.response?.status === 401) navigate('/login');
+    //             }
+    //         };
+    //         fetchUsers();
+    //     }, []);
 
     return (
         <div className={cx('main-content')}>

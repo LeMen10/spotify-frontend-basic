@@ -22,7 +22,8 @@ const Message = ({ setCheckOnClickChat }) => {
     const [selectedMessageId, setSelectedMessageId] = useState(null);
     const [conversationId, setConversationId] = useState(null);
     const [socket, setSocket] = useState();
-
+    console.log(messages)
+    console.log(messagesEndRef.current)
     useEffect(() => {
         const token = Cookies.get('token');
         const wsUrl = `ws://localhost:8000/ws/chat/General/`;
@@ -86,8 +87,8 @@ const Message = ({ setCheckOnClickChat }) => {
                 const res = await request.get(`/api/message/get-messages-general-chat`);
                 setMessages(res.data.messages);
                 setTimeout(() => {
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-                }, 0);
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 100);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
             } finally {
@@ -117,9 +118,7 @@ const Message = ({ setCheckOnClickChat }) => {
         })();
     }, []);
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-    }, [messages]);
+
 
     const sendMessage = async () => {
         if (showEmojiPicker) setShowEmojiPicker(false);
@@ -221,7 +220,7 @@ const Message = ({ setCheckOnClickChat }) => {
                                 ))
                             )}
 
-                            <div ref={messagesEndRef}></div>
+                            <div ref={messagesEndRef} style={{ float: "left", clear: "both" }}></div>
                         </div>
 
                         <div className={cx('input-container')}>
