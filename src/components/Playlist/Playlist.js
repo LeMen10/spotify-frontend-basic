@@ -27,6 +27,7 @@ const Playlist = () => {
                 <div className={cx('menu-item', 'active')}>
                     <i className={cx('fas fa-home')}></i>
                     <span>Home</span>
+                    
                 </div>
                 <div className={cx('menu-item')}>
                     <i className={cx('fas fa-search')}></i>

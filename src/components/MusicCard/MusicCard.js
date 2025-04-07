@@ -1,89 +1,217 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from './MusicCard.module.scss';
 import request from '~/utils/request';
-import { useNavigate } from 'react-router-dom';
+import { faPause, faPlay, faBackwardStep, faForwardStep, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const cx = classNames.bind(styles);
 
-const MusicCard = ({ onSelectContact, searchQuery }) => {
-    const [contacts, setContacts] = useState([]);
-    const navigate = useNavigate();
+const MusicCard = () => {
+    const [songs, setSongs] = useState([]);
+    const [currentSong, setCurrentSong] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [volume, setVolume] = useState(0.6);
+    const audioRef = useRef(null);
 
-    // useEffect(() => {
-    //     const fetchUsers = async () => {
-    //         try {
-    //             const res = await request.get(`/api/users`);
-    //             setContacts(res.data);
-    //         } catch (error) {
-    //             if (error.response?.status === 401) navigate('/login');
-    //         }
-    //     };
-    //     fetchUsers();
-    // }, [navigate]);
+    // Lấy danh sách bài hát
+    useEffect(() => {
+        (async () => {
+            try {
+                if (songs.length === 0) {
+                    const res = await request.get('api/songs/get-songs');
+                    setSongs(res.data);
+                    if (res.data.length > 0 && !currentSong) {
+                        setCurrentSong(res.data[0]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching songs:', error);
+            }
+        })();
+    }, [currentSong, songs.length]);
 
-    // useEffect(() => {
-    //     const fetchFilteredContacts = async () => {
-    //         try {
-    //             const res = await request.get(`/api/users`, { params: { search: searchQuery } });
-    //             setContacts(res.data);
-    //         } catch (error) {
-    //             if (error.response?.status === 401) navigate('/login');
-    //         }
-    //     };
-    //     fetchFilteredContacts();
-    // }, [searchQuery, navigate]);
+    // Xử lý play
+    const togglePlay = useCallback(() => {
+        if (!audioRef.current) return;
+
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            audioRef.current.play().catch((e) => console.error('Play failed:', e));
+            setIsPlaying(true);
+        }
+    }, [isPlaying]);
+
+    const playNext = useCallback(() => {
+        if (!songs.length) return;
+        const currentIndex = songs.findIndex((song) => song.id === currentSong?.id);
+        const nextIndex = (currentIndex + 1) % songs.length;
+        setCurrentSong(songs[nextIndex]);
+    }, [songs, currentSong]);
+
+    const playPrev = useCallback(() => {
+        if (!songs.length) return;
+        const currentIndex = songs.findIndex((song) => song.id === currentSong?.id);
+        const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
+        setCurrentSong(songs[prevIndex]);
+    }, [songs, currentSong]);
+
+    // Xử lý khi select song
+    const selectSong = useCallback((song) => {
+        setCurrentSong(song);
+    }, []);
+
+    // time update
+    const handleTimeUpdate = useCallback(() => {
+        if (!audioRef.current) return;
+        const now = Date.now();
+        if (!audioRef.current.lastUpdate || now - audioRef.current.lastUpdate >= 1000) {
+            setCurrentTime(audioRef.current.currentTime);
+            audioRef.current.lastUpdate = now;
+        }
+    }, []);
+
+    const handleSeek = (e) => {
+        const newTime = e.target.value;
+        if (!audioRef.current) return;
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+    };
+
+    const handleVolumeChange = (e) => {
+        const newVolume = e.target.value;
+        if (!audioRef.current) return;
+        audioRef.current.volume = newVolume;
+        setVolume(newVolume);
+    };
+
+    const formatTime = (time) => {
+        if (isNaN(time)) return '0:00';
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
+
+    useEffect(() => {
+        if (!audioRef.current || !currentSong) return;
+        audioRef.current.src = currentSong.audio_url;
+        audioRef.current.currentTime = 0;
+        setCurrentTime(0);
+
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => setIsPlaying(true))
+                .catch((e) => {
+                    console.error('Auto play failed:', e);
+                    setIsPlaying(false);
+                });
+        }
+    }, [currentSong]);
+
+    // Cập nhật duration khi metadata được load
+    useEffect(() => {
+        if (!audioRef.current) return;
+
+        const handleLoadedMetadata = () => {
+            setDuration(audioRef.current.duration || 0);
+        };
+
+        audioRef.current.lastUpdate = 0;
+        const audioElement = audioRef.current;
+        audioElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+        return () => {
+            audioElement?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        };
+    }, []);
 
     return (
-        <>
-            <div className={cx('music-card')}>
-                <div className={cx('controls')}>
-                    <i className={cx('fas fa-step-backward')}></i>
-                    <i className={cx('fas fa-play')}></i>
-                    <i className={cx('fas fa-step-forward')}></i>
+        <div className={cx('music-player')}>
+            <audio ref={audioRef} src={currentSong?.audio_url} onTimeUpdate={handleTimeUpdate} onEnded={playNext} />
+
+            <div className={cx('player-controls')}>
+                <div className={cx('song-info')}>
+                    {currentSong && (
+                        <>
+                            <h3>{currentSong.title}</h3>
+                            <p>{currentSong.artist_info.name}</p>
+                        </>
+                    )}
                 </div>
-                <div className={cx('progress')}>
-                    <span>0:00</span>
-                    {/* <input max="100" min="0" type="range" value="0" /> */}
-                    <span>3:45</span>
+                <div className={cx('progress-wrap')}>
+                    <div className={cx('main-controls')}>
+                        <div className={cx('control-btn')}>
+                            <button onClick={playPrev} className={cx('faBackwardStep')}>
+                                <FontAwesomeIcon size="2x" color="#ffffff" icon={faBackwardStep} />
+                            </button>
+                        </div>
+
+                        <div className={cx('play-btn')} onClick={togglePlay}>
+                            <button>
+                                {isPlaying ? (
+                                    <FontAwesomeIcon className={cx('faPause')} icon={faPause} />
+                                ) : (
+                                    <FontAwesomeIcon className={cx('faPlay')} icon={faPlay} />
+                                )}
+                            </button>
+                        </div>
+
+                        <div className={cx('control-btn')}>
+                            <button onClick={playNext} className={cx('faForwardStep')}>
+                                <FontAwesomeIcon size="2x" color="#ffffff" icon={faForwardStep} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className={cx('progress-container')}>
+                        <span>{formatTime(currentTime)}</span>
+                        <input
+                            type="range"
+                            min="0"
+                            max={duration || 100}
+                            value={currentTime}
+                            onChange={handleSeek}
+                            className={cx('progress-bar')}
+                        />
+                        <span>{formatTime(duration)}</span>
+                    </div>
                 </div>
-                <div className={cx('volume')}>
-                    <i className={cx('fas fa-volume-up')}></i>
-                    {/* <input max="100" min="0" type="range" value="50" /> */}
+
+                <div className={cx('volume-control')}>
+                    <FontAwesomeIcon color="#ffffff" icon={faVolumeUp} />
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={handleVolumeChange}
+                        className={cx('volume-slider')}
+                    />
                 </div>
             </div>
 
-            {/* <div className={cx("music-player")}>
-                <div className={cx("song-info")}>
-                    <img src="https://via.placeholder.com/60" alt="Album Cover" />
-                    <div className={cx("song-details")}>
-                        <h4>97. ĐỪNG LÀM ANH HÙNG TRONG CUỘC ĐỜI</h4>
-                        <p>Kien Tran</p>
+            {/* Playlist */}
+            <div className={cx('playlist')}>
+                {songs.map((song) => (
+                    <div
+                        key={song.id}
+                        className={cx('playlist-item', { active: currentSong?.id === song.id })}
+                        onClick={() => selectSong(song)}
+                    >
+                        <div className={cx('song-details')}>
+                            <h4>{song.title}</h4>
+                            <p>
+                                {song.artist_info.name} • {formatTime(song.duration)}
+                            </p>
+                        </div>
                     </div>
-                    <i className={cx("fa fa-plus-circle")}></i>
-                </div>
-
-                <div className={cx("controls")}>
-                    <span className={cx("speed")}>1.3x</span>
-                    <i className={cx("fa fa-backward")}></i>
-                    <i className={cx("fa fa-play-circle")}></i>
-                    <i className={cx("fa fa-forward")}></i>
-                </div>
-
-                <div className={cx("progress-bar")}>
-                    <span className={cx("current-time")}>12:23</span>
-                    <input type="range" min="0" max="100" value="80" />
-                    <span className={cx("total-time")}>15:06</span>
-                </div>
-
-                <div className={cx("extra-controls")}>
-                    <i className={cx("fa fa-list")}></i>
-                    <i className={cx("fa fa-volume-up")}></i>
-                    <input type="range" min="0" max="100" value="50" className={cx("volume")} />
-                    <i className={cx("fa fa-expand")}></i>
-                </div>
-            </div> */}
-        </>
+                ))}
+            </div>
+        </div>
     );
 };
 
