@@ -1,51 +1,90 @@
-import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
-import styles from './Contact.module.scss';
-import request from '~/utils/request';
-import { useNavigate } from 'react-router-dom';
+import styles from './Sidebar.module.scss';
+import { useNavigate, useParams } from 'react-router-dom';
+import * as request from '~/utils/request';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from 'react-toastify';
+import { PlusIcon, MusicIcon } from '~/components/Icons';
 
 const cx = classNames.bind(styles);
 
-const Contact = ({ onSelectContact, searchQuery }) => {
-    const [contacts, setContacts] = useState([]);
+const Sidebar = ({ onPlaylistAction, playlists }) => {
     const navigate = useNavigate();
+    const { id } = useParams();
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await request.get(`/api/users`);
-                console.log(res.data);
-                setContacts(res.data);
-            } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
-            }
-        };
-        fetchUsers();
-    }, [navigate]);
+    const handleAddDefaultPlaylist = async () => {
+        try {
+            const formData = new FormData();
+            formData.append('name', `Danh sách phát của tôi #${playlists.length + 1}`);
 
-    useEffect(() => {
-        const fetchFilteredContacts = async () => {
-            try {
-                const res = await request.get(`/api/users`, { params: { search: searchQuery } });
-                setContacts(res.data);
-            } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
+            const res = await request.post('/api/playlists/add-playlist', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            onPlaylistAction('Playlist added');
+            toast.success('Playlist added successfully');
+            navigate(`/playlist/${res.id}`);
+        } catch (error) {
+            console.error('Error adding playlist:', error);
+            if (error.response?.status === 401) {
+                navigate('/login');
+            } else {
+                toast.error('Failed to add playlist. Please try again.');
             }
-        };
-        fetchFilteredContacts()
-    }, [searchQuery, navigate]);
+        }
+    };
 
     return (
         <>
-            {contacts.length > 0 &&
-                contacts.map((result) => (
-                    <div className={cx('contact')} key={result._id} onClick={() => onSelectContact(result)}>
-                        <img alt="" height="40" src={result.profilePic} width="40" />
-                        <div className={cx('name')}>{result.fullName}</div>
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
+            <div className={cx('playlist')}>
+
+                <div className={cx('library')}>
+                    <div className={cx('title-library')}>
+                        <h3>Thư viện</h3>
+                        <div className={cx('library-icon-add')} onClick={handleAddDefaultPlaylist}>
+                            <PlusIcon />
+                        </div>
                     </div>
-                ))}
+
+                    {playlists.length > 0 &&
+                        playlists.map((item) => (
+                            <div
+                                key={item.id}
+                                className={cx('library-item', { active: Number(id) === item.id })}
+                                onClick={() => navigate(`/playlist/${item.id}`)}
+                            >
+                                {item.image ? (
+                                    <img alt="" height="40" src={item.image} width="40" />
+                                ) : (
+                                    <span className={cx('music-icon')}>
+                                        <MusicIcon />
+                                    </span>
+                                )}
+
+                                <div>
+                                    <div className={cx('playlist-title')}>{item.name}</div>
+                                    <div>
+                                        <span className={cx('playlist-type')}>Danh sách phát</span> •{' '}
+                                        <span className={cx('playlist-user')}>{item.fullname}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            </div>
         </>
     );
 };
 
-export default Contact;
+export default Sidebar;
