@@ -1,22 +1,15 @@
 import React from 'react';
 import classNames from 'classnames/bind';
 import styles from './Playlist.module.scss';
-import {
-    EllipsisVerticalIcon,
-    MusicIcon,
-    TrashIcon,
-    UpdateIcon,
-    ShareIcon,
-    PlayIcon,
-    PauseIcon,
-} from '~/components/Icons';
+import { EllipsisVerticalIcon, MusicIcon, TrashIcon, UpdateIcon, ShareIcon } from '~/components/Icons';
 import { useState, useEffect, useRef } from 'react';
 import * as request from '~/utils/request';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 
 const cx = classNames.bind(styles);
 
-const Playlist = ({ onPlaylistAction }) => {
+const Playlist = ({ onPlaylistAction, currentSongID }) => {
     const navigate = useNavigate();
     const [songQuery, setSongQuery] = useState();
     const [playlistDetail, setPlaylistDetail] = useState({});
@@ -43,7 +36,7 @@ const Playlist = ({ onPlaylistAction }) => {
                 const res = await request.get(`/api/playlists/get-playlist/${id}`);
                 setPlaylistDetail(res);
             } catch (error) {
-                if (error.response && error.response.status === 401) {
+                if (error.response.status === 401) {
                     navigate('/login');
                 }
             } finally {
@@ -125,16 +118,18 @@ const Playlist = ({ onPlaylistAction }) => {
     };
 
     // search
-    const fetchSongs = async (searchTerm) => {
-        try {
-            const res = await request.get(`/api/songs/search?query=${encodeURIComponent(searchTerm)}`);
-            console.log(res.data);
-            setSongQuery(res.data);
-        } catch (error) {
-            console.error('Error fetching songs:', error);
-            if (error.response && error.response.status === 401) navigate('/login');
-        }
-    };
+    useEffect(() => {
+        if (!debouncedSearch) return;
+        (async () => {
+            try {
+                const res = await request.get(`/api/songs/search?query=${encodeURIComponent(debouncedSearch)}`);
+                setSongQuery(res.data);
+            } catch (error) {
+                console.error('Error fetching songs:', error);
+                if (error.response?.status === 401) navigate('/login');
+            }
+        })();
+    }, [debouncedSearch, navigate]);
 
     // update debouncedSearch sau (500ms)
     useEffect(() => {
@@ -146,13 +141,6 @@ const Playlist = ({ onPlaylistAction }) => {
         return () => clearTimeout(handler);
     }, [searchTerm]);
 
-    // Khi debouncedSearch update, gọi API || lọc data
-    useEffect(() => {
-        if (debouncedSearch) {
-            fetchSongs(debouncedSearch);
-        }
-    }, [debouncedSearch]);
-
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
@@ -162,6 +150,16 @@ const Playlist = ({ onPlaylistAction }) => {
         setSongQuery([]);
     };
 
+    const getSongOfPlaylist = async () => {
+        try {
+            const res = await request.get(`/api/playlist/get-songs/${id}`);
+            setSongOfPlaylist(res);
+        } catch (error) {
+            console.error('Error fetching songs:', error);
+            if (error.response.status === 401) navigate('/login');
+        }
+    };
+
     const addSongToPlaylist = async (songId) => {
         const data = {
             playlist_id: id,
@@ -169,9 +167,11 @@ const Playlist = ({ onPlaylistAction }) => {
         };
         try {
             await request.post(`/api/playlist/add-song/`, data);
+            getSongOfPlaylist();
         } catch (error) {
             console.error('Error fetching songs:', error);
-            if (error.response && error.response.status === 401) navigate('/login');
+            if (error.response.status === 401) navigate('/login');
+            if (error.response.status === 400) toast.warning('Song is already in the list');
         }
     };
 
@@ -179,11 +179,9 @@ const Playlist = ({ onPlaylistAction }) => {
         (async () => {
             try {
                 const res = await request.get(`/api/playlist/get-songs/${id}`);
-                console.log(res);
                 setSongOfPlaylist(res);
             } catch (error) {
-                console.error('Error fetching songs:', error);
-                if (error.response && error.response.status === 401) navigate('/login');
+                if (error.response.status === 401) navigate('/login');
             }
         })();
     }, [id, navigate]);
@@ -196,6 +194,38 @@ const Playlist = ({ onPlaylistAction }) => {
         return `${minutes}:${formattedSeconds}`;
     };
 
+    // play all songs in playlist
+    const handlePlayClick = async () => {
+        try {
+            const res = await request.get(`/api/playlist/get-songs/${id}`);
+            onPlaylistAction({ type: 'PLAY_SONGS', data: res });
+        } catch (error) {
+            if (error.response.status === 401) navigate('/login');
+        }
+    };
+
+    // play single song and move song active to first position
+    const handlePlaySingleSong = (song) => {
+        const reorderedSongs = [song, ...songOfPlaylist.filter((s) => s.id !== song.id)];
+        onPlaylistAction({ type: 'PLAY_SONGS', data: reorderedSongs, currentSongID: song.id });
+    };
+
+    // delete song from playlist
+    const handleDeleteSong = async (songId) => {
+        console.log(id, songId);
+        try {
+            await request.delete_method(`/api/playlist/remove-song/`, {
+                data: { playlist_id: id, song_id: songId },
+            });
+            const res = await request.get(`/api/playlist/get-songs/${id}`);
+            setSongOfPlaylist(res);
+            onPlaylistAction({ type: 'UPDATE_SONG_LIST', data: res });
+        } catch (error) {
+            console.error('Error deleting song from playlist:', error);
+            if (error.response.status === 401) navigate('/login');
+        }
+    };
+
     return (
         <>
             {isLoading ? (
@@ -203,244 +233,295 @@ const Playlist = ({ onPlaylistAction }) => {
                     <div className={cx('spinner')}></div>
                 </div>
             ) : (
-                <div className={cx('container')} aria-label="Playlist Danh sách phát của tôi #1" role="main">
-                    <header className={cx('header')}>
-                        {playlistDetail && (
-                            <>
-                                <div
-                                    className={cx('cover')}
-                                    aria-label="Playlist cover image placeholder with music note icon"
-                                >
-                                    {playlistDetail?.image ? (
-                                        <img
-                                            alt="Gray music note icon on dark square background"
-                                            height="64"
-                                            src={playlistDetail?.image}
-                                            width="64"
-                                        />
-                                    ) : (
-                                        <span className={cx('music-icon')}>
-                                            <MusicIcon />
-                                        </span>
+                <>
+                    <ToastContainer
+                        position="top-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="light"
+                    />
+                    <div className={cx('container')} aria-label="Playlist Danh sách phát của tôi #1" role="main">
+                        <header className={cx('header')}>
+                            {playlistDetail && (
+                                <>
+                                    <div
+                                        className={cx('cover')}
+                                        aria-label="Playlist cover image placeholder with music note icon"
+                                    >
+                                        {playlistDetail?.image ? (
+                                            <img
+                                                alt="Gray music note icon on dark square background"
+                                                height="64"
+                                                src={playlistDetail?.image}
+                                                width="64"
+                                            />
+                                        ) : (
+                                            <span className={cx('music-icon')}>
+                                                <MusicIcon />
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className={cx('header-text')}>
+                                        <div className={cx('subtitle')}>Danh sách phát</div>
+                                        <h1>{playlistDetail?.name}</h1>
+                                        <strong className={cx('description')}>{playlistDetail?.description}</strong>
+                                        <div className={cx('author')}>
+                                            <strong>{playlistDetail?.fullname}</strong>
+                                            <span className={cx('dot')}>·</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </header>
+
+                        <section className={cx('search-section')} aria-label="Search content for playlist">
+                            <div className={cx('actions-bar')}>
+                                <div className={cx('pause-music-icon')}>
+                                    {songOfPlaylist.length > 0 && (
+                                        <div className={cx('play-music-btn')} onClick={() => handlePlayClick()}>
+                                            Phát tất cả
+                                        </div>
                                     )}
                                 </div>
-                                <div className={cx('header-text')}>
-                                    <div className={cx('subtitle')}>Danh sách phát</div>
-                                    <h1>{playlistDetail?.name}</h1>
-                                    <strong className={cx('description')}>{playlistDetail?.description}</strong>
-                                    <div className={cx('author')}>
-                                        <strong>{playlistDetail?.fullname}</strong>
-                                        <span className={cx('dot')}>·</span>
-                                    </div>
+                                <div className={cx('ellipsis-vertical-icon')} onClick={() => setStateMenu(true)}>
+                                    <EllipsisVerticalIcon />
                                 </div>
-                            </>
-                        )}
-                    </header>
-
-                    <section className={cx('search-section')} aria-label="Search content for playlist">
-                        <div className={cx('actions-bar')}>
-                            <div className={cx('pause-music-icon')}>
-                                {songOfPlaylist.length > 0 ? <PlayIcon fill={'#00bf66'} /> : <></>}
+                                {stateMenu && (
+                                    <nav className={cx('menu')} role="menu" aria-label="Context menu" ref={menuRef}>
+                                        <div className={cx('menu-item')} role="menuitem" onClick={handleEditClick}>
+                                            <UpdateIcon fill="#aeaeae" width="16" height="16" />
+                                            Sửa thông tin chi tiết
+                                        </div>
+                                        <div className={cx('menu-item')} role="menuitem" onClick={handleDeleteClick}>
+                                            <TrashIcon fill="#aeaeae" width="16" height="16" />
+                                            Xoá
+                                        </div>
+                                        <div
+                                            className={cx('menu-item')}
+                                            role="menuitem"
+                                            onClick={() => setStateMenu(false)}
+                                        >
+                                            <ShareIcon fill="#aeaeae" width="16" height="16" />
+                                            Chia sẻ
+                                        </div>
+                                    </nav>
+                                )}
                             </div>
-                            <div className={cx('ellipsis-vertical-icon')} onClick={() => setStateMenu(true)}>
-                                <EllipsisVerticalIcon />
-                            </div>
-                            {stateMenu && (
-                                <nav className={cx('menu')} role="menu" aria-label="Context menu" ref={menuRef}>
-                                    <div className={cx('menu-item')} role="menuitem" onClick={handleEditClick}>
-                                        <UpdateIcon fill="#aeaeae" width="16" height="16" />
-                                        Sửa thông tin chi tiết
-                                    </div>
-                                    <div className={cx('menu-item')} role="menuitem" onClick={handleDeleteClick}>
-                                        <TrashIcon fill="#aeaeae" width="16" height="16" />
-                                        Xoá
-                                    </div>
-                                    <div
-                                        className={cx('menu-item')}
-                                        role="menuitem"
-                                        onClick={() => setStateMenu(false)}
-                                    >
-                                        <ShareIcon fill="#aeaeae" width="16" height="16" />
-                                        Chia sẻ
-                                    </div>
-                                </nav>
-                            )}
-                        </div>
-                        {songOfPlaylist.length > 0 && (
-                            <div aria-label="Music list" className={cx('table-music')} role="table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">#</th>
-                                            <th scope="col">Tiêu đề</th>
-                                            <th aria-label="Duration" scope="col">
-                                                Thời lượng
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {songOfPlaylist.map((song, index) => (
-                                            <tr key={song.id}>
-                                                <td>{index + 1}</td>
-                                                <td>
-                                                    <div className={cx('song-info')}>
-                                                        <img
-                                                            alt="Album cover showing sunset over mountains with orange sky"
-                                                            height="40"
-                                                            src={song.image}
-                                                            width="40"
-                                                        />
-                                                        <div className={cx('song-text')}>
-                                                            <span className={cx('song-title')}>{song.title}</span>
-                                                            <span className={cx('song-artist')}>
-                                                                {song.artist_info.song}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>{formatTime(song.duration)}</td>
+                            {songOfPlaylist.length > 0 && (
+                                <div aria-label="Music list" className={cx('table-music')} role="table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">#</th>
+                                                <th scope="col">Tiêu đề</th>
+                                                <th aria-label="Duration" scope="col">
+                                                    Thời lượng
+                                                </th>
+                                                <th scope="col">Hành động</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                        </thead>
+                                        <tbody>
+                                            {songOfPlaylist.map((song, index) => (
+                                                <tr key={song.id}>
+                                                    <td
+                                                        className={cx('song-title', {
+                                                            active: currentSongID === song.id,
+                                                        })}
+                                                    >
+                                                        {index + 1}
+                                                    </td>
+                                                    <td>
+                                                        <div className={cx('song-info')}>
+                                                            <img
+                                                                alt="Album cover showing sunset over mountains with orange sky"
+                                                                height="40"
+                                                                src={song.image}
+                                                                width="40"
+                                                                onClick={() => handlePlaySingleSong(song)}
+                                                            />
+                                                            <div className={cx('song-text')}>
+                                                                <span
+                                                                    className={cx('song-title', {
+                                                                        active: currentSongID === song.id,
+                                                                    })}
+                                                                    onClick={() => handlePlaySingleSong(song)}
+                                                                >
+                                                                    {song.title}
+                                                                </span>
+                                                                <span className={cx('song-artist')}>
+                                                                    {song.artist_info.name}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{formatTime(song.duration)}</td>
+                                                    <td>
+                                                        <div
+                                                            className={cx('song-delete-btn')}
+                                                            onClick={() => handleDeleteSong(song.id)}
+                                                        >
+                                                            <TrashIcon fill="#aeaeae" width="16" height="16" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
 
-                        <h2>Hãy cùng tìm nội dung cho danh sách phát của bạn</h2>
+                            <h2>Hãy cùng tìm nội dung cho danh sách phát của bạn</h2>
 
-                        <div className={cx('search-input-wrapper')}>
-                            <svg aria-hidden="true" className={cx('search-icon')} focusable="false" viewBox="0 0 24 24">
-                                <path
-                                    d="M15.5 14h-.79l-.28-.27A6.471 6.471 
+                            <div className={cx('search-input-wrapper')}>
+                                <svg
+                                    aria-hidden="true"
+                                    className={cx('search-icon')}
+                                    focusable="false"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        d="M15.5 14h-.79l-.28-.27A6.471 6.471 
                             0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 
                             4.23-1.57l.27.28v.79l5 4.99L20.49 
                             19l-4.99-5zM10 14a4 4 0 110-8 4 4 0 010 8z"
+                                    />
+                                </svg>
+                                <input
+                                    aria-label="Search songs and podcasts"
+                                    placeholder="Tìm bài hát và tập podcast"
+                                    type="input"
+                                    value={searchTerm}
+                                    onChange={handleSearchChange}
                                 />
-                            </svg>
-                            <input
-                                aria-label="Search songs and podcasts"
-                                placeholder="Tìm bài hát và tập podcast"
-                                type="input"
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                            />
-                            <button
-                                type="reset"
-                                aria-label="Clear search input"
-                                className={cx('clear-btn')}
-                                onClick={handleClearSearch}
-                            >
-                                ×
-                            </button>
-                        </div>
+                                <button
+                                    type="reset"
+                                    aria-label="Clear search input"
+                                    className={cx('clear-btn')}
+                                    onClick={handleClearSearch}
+                                >
+                                    ×
+                                </button>
+                            </div>
 
-                        {songQuery && songQuery.length > 0 && (
-                            <div className={cx('result')}>
-                                {songQuery.map((song) => (
-                                    <div key={song.id} className={cx('music-item')}>
-                                        <img
-                                            className={cx('music-image')}
-                                            alt={song.title}
-                                            height="48"
-                                            src={song.image || '/default_image.jpg'}
-                                            width="48"
-                                        />
-                                        <div className={cx('music-info-left')}>
-                                            <strong>{song.title}</strong>
-                                            <span>{song.artist_info.name}</span>
+                            {songQuery && songQuery.length > 0 && (
+                                <div className={cx('result')}>
+                                    {songQuery.map((song) => (
+                                        <div key={song.id} className={cx('music-item')}>
+                                            <img
+                                                className={cx('music-image')}
+                                                alt={song.title}
+                                                height="48"
+                                                src={song.image || '/default_image.jpg'}
+                                                width="48"
+                                            />
+                                            <div className={cx('music-info-left')}>
+                                                <strong>{song.title}</strong>
+                                                <span>{song.artist_info.name}</span>
+                                            </div>
+                                            <div className={cx('music-info-center')}>{song.title}</div>
+                                            <button
+                                                className={cx('btn-add')}
+                                                onClick={() => addSongToPlaylist(song.id)}
+                                            >
+                                                Thêm
+                                            </button>
                                         </div>
-                                        <div className={cx('music-info-center')}>{song.title}</div>
-                                        <button className={cx('btn-add')} onClick={() => addSongToPlaylist(song.id)}>
-                                            Thêm
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* update */}
+                        {openModal && (
+                            <div
+                                aria-modal="true"
+                                className={cx('modal-overlay')}
+                                role="dialog"
+                                onClick={() => setOpenModal(false)}
+                            >
+                                <div className={cx('modal')} onClick={(e) => e.stopPropagation()}>
+                                    <div className={cx('modal-header')}>
+                                        <h2 id="modal-title">Sửa thông tin chi tiết</h2>
+                                        <button
+                                            aria-label="Close modal"
+                                            className={cx('close-btn')}
+                                            onClick={() => setOpenModal(false)}
+                                        >
+                                            ×
                                         </button>
                                     </div>
-                                ))}
+                                    <div className={cx('modal-body')}>
+                                        <div className={cx('image-box')}>
+                                            <label className={cx('upload-label')}>
+                                                {selectedImage ? (
+                                                    <img
+                                                        alt="Selected"
+                                                        height="64"
+                                                        src={URL.createObjectURL(selectedImage)}
+                                                        width="64"
+                                                        className={cx('upload-image')}
+                                                    />
+                                                ) : playlistDetail?.image ? (
+                                                    <img
+                                                        alt="Playlist"
+                                                        height="64"
+                                                        src={playlistDetail.image}
+                                                        width="64"
+                                                        className={cx('upload-image')}
+                                                    />
+                                                ) : (
+                                                    <span className={cx('music-icon')}>
+                                                        <MusicIcon />
+                                                    </span>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageChange}
+                                                    style={{ display: 'none' }}
+                                                />
+                                            </label>
+                                        </div>
+                                        <div className={cx('inputs')}>
+                                            <input
+                                                aria-label="Playlist name"
+                                                type="text"
+                                                value={playlistData.name}
+                                                onChange={(e) =>
+                                                    setPlaylistData({ ...playlistData, name: e.target.value })
+                                                }
+                                            />
+                                            <textarea
+                                                aria-label="Playlist description"
+                                                placeholder="Thêm phần mô tả không bắt buộc"
+                                                value={playlistData.description}
+                                                onChange={(e) =>
+                                                    setPlaylistData({ ...playlistData, description: e.target.value })
+                                                }
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                    <div className={cx('save-btn-wrapper')}>
+                                        <button className={cx('save-btn')} type="button" onClick={handleSavePlaylist}>
+                                            Lưu
+                                        </button>
+                                    </div>
+
+                                    <p className={cx('modal-footer-text')}>
+                                        Bằng cách tiếp tục, bạn đồng ý cho phép Spotify Clone truy cập vào hình ảnh bạn
+                                        đã chọn để tải lên. Vui lòng đảm bảo bạn có quyền tải lên hình ảnh.
+                                    </p>
+                                </div>
                             </div>
                         )}
-                    </section>
-
-                    {/* update */}
-                    {openModal && (
-                        <div
-                            aria-modal="true"
-                            className={cx('modal-overlay')}
-                            role="dialog"
-                            onClick={() => setOpenModal(false)}
-                        >
-                            <div className={cx('modal')} onClick={(e) => e.stopPropagation()}>
-                                <div className={cx('modal-header')}>
-                                    <h2 id="modal-title">Sửa thông tin chi tiết</h2>
-                                    <button
-                                        aria-label="Close modal"
-                                        className={cx('close-btn')}
-                                        onClick={() => setOpenModal(false)}
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                                <div className={cx('modal-body')}>
-                                    <div className={cx('image-box')}>
-                                        <label className={cx('upload-label')}>
-                                            {selectedImage ? (
-                                                <img
-                                                    alt="Selected"
-                                                    height="64"
-                                                    src={URL.createObjectURL(selectedImage)}
-                                                    width="64"
-                                                    className={cx('upload-image')}
-                                                />
-                                            ) : playlistDetail?.image ? (
-                                                <img
-                                                    alt="Playlist"
-                                                    height="64"
-                                                    src={playlistDetail.image}
-                                                    width="64"
-                                                    className={cx('upload-image')}
-                                                />
-                                            ) : (
-                                                <span className={cx('music-icon')}>
-                                                    <MusicIcon />
-                                                </span>
-                                            )}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleImageChange}
-                                                style={{ display: 'none' }}
-                                            />
-                                        </label>
-                                    </div>
-                                    <div className={cx('inputs')}>
-                                        <input
-                                            aria-label="Playlist name"
-                                            type="text"
-                                            value={playlistData.name}
-                                            onChange={(e) => setPlaylistData({ ...playlistData, name: e.target.value })}
-                                        />
-                                        <textarea
-                                            aria-label="Playlist description"
-                                            placeholder="Thêm phần mô tả không bắt buộc"
-                                            value={playlistData.description}
-                                            onChange={(e) =>
-                                                setPlaylistData({ ...playlistData, description: e.target.value })
-                                            }
-                                        ></textarea>
-                                    </div>
-                                </div>
-                                <div className={cx('save-btn-wrapper')}>
-                                    <button className={cx('save-btn')} type="button" onClick={handleSavePlaylist}>
-                                        Lưu
-                                    </button>
-                                </div>
-
-                                <p className={cx('modal-footer-text')}>
-                                    Bằng cách tiếp tục, bạn đồng ý cho phép Spotify Clone truy cập vào hình ảnh bạn đã
-                                    chọn để tải lên. Vui lòng đảm bảo bạn có quyền tải lên hình ảnh.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                </>
             )}
         </>
     );
