@@ -37,7 +37,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
     return (
         <>
             <div className={cx('header')}>
-                <div className={cx('logo')}>
+                <div className={cx('logo')} onClick={() => navigate('/')}>
                     <h1>Spotify</h1>
                 </div>
                 <div className={cx('wrap-actions')}>
@@ -47,7 +47,6 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                     </div>
                     <div className={cx('actions')}>
                         <button>Khám phá Premium</button>
-                        <button>Cài đặt Ứng dụng</button>
                         {user && (
                             <div className={cx('user')}>
                                 <span className={cx('logged')}>

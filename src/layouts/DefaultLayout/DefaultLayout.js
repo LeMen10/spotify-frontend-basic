@@ -19,7 +19,11 @@ const DefaultLayout = ({ children }) => {
     const [checkOnClickChatGemini, setCheckOnClickChatGemini] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [playlists, setPlaylists] = useState([]);
+    const [songs, setSongs] = useState([]);
+    const [currentSongID, setCurrentSongID] = useState(null);
     const token = Cookies.get('token');
+
+    console.log(currentSongID);
 
     const fetchPlaylists = async () => {
         try {
@@ -40,9 +44,23 @@ const DefaultLayout = ({ children }) => {
         return () => clearTimeout(timer);
     }, [token]);
 
-    const handlePlaylistAction = (message) => {
-        console.log('Message from Playlist:', message);
+    const handlePlaylistAction = (action) => {
+        console.log('Message from Playlist:', action);
         fetchPlaylists();
+        if (action.type === 'PLAY_SONGS' || action.type === 'PLAY_SINGLE_SONG') {
+            setSongs(action.data);
+            if (action.currentSongID) setCurrentSongID(action.currentSongID);
+        } else if (action.type === 'UPDATE_SONG_LIST') {
+            if (action.data.find((song) => song.id === currentSongID)) setSongs(action.data);
+            else {
+                setSongs([]);
+                setCurrentSongID(null);
+            }
+        }
+    };
+
+    const handleSongChange = (song) => {
+        setCurrentSongID(song.id);
     };
 
     return (
@@ -62,7 +80,10 @@ const DefaultLayout = ({ children }) => {
                         <div className={cx('container')}>
                             <Sidebar onPlaylistAction={handlePlaylistAction} playlists={playlists} />
                             <div className={cx('content')}>
-                                {React.cloneElement(children, { onPlaylistAction: handlePlaylistAction })}
+                                {React.cloneElement(children, {
+                                    onPlaylistAction: handlePlaylistAction,
+                                    currentSongID,
+                                })}
                             </div>
                             {checkOnClickChat && <Message setCheckOnClickChat={setCheckOnClickChat} />}
                             {checkOnClickChatGemini && (
@@ -71,7 +92,7 @@ const DefaultLayout = ({ children }) => {
                             {/* <Message setCheckOnClickChat={setCheckOnClickChat}/> */}
                             {/* <WaitingList/> */}
                         </div>
-                        <MusicCard />
+                        <MusicCard songs={songs} onSongChange={handleSongChange} />
                     </div>
                 )
             )}
