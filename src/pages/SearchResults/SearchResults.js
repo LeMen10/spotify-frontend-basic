@@ -1,33 +1,37 @@
-import { useEffect, useState, useRef } from 'react';
-import className from 'classnames/bind';
-import styles from './Home.module.scss';
+import React from 'react';
+import classNames from 'classnames/bind';
+import { useLocation } from 'react-router-dom';
+import styles from './SearchResults.module.scss';
+import { useState, useEffect, useRef } from 'react';
 import request from '~/utils/request';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
-import images from '~/assets/images/images';
-import { PlusIcon } from '~/components/Icons';
 import Cookies from 'js-cookie';
+import { ToastContainer, toast } from 'react-toastify';
+import { PlusIcon } from '~/components/Icons';
 import Footer from '~/components/Footer/Footer';
 
-const cx = className.bind(styles);
-
-const Home = ({ onPlaylistAction, currentSongID }) => {
+const SearchResults = ({ onPlaylistAction, currentSongID }) => {
     const navigate = useNavigate();
-    const menuRef = useRef(null);
-    const [songs, setSongs] = useState([]);
-    const [playlists, setPlaylists] = useState([]);
+    const location = useLocation();
+    const cx = classNames.bind(styles);
+    const rs = location.state?.rs || [];
     const [activeMenuIndex, setActiveMenuIndex] = useState(null);
+    const menuRef = useRef(null);
+    const [playlists, setPlaylists] = useState([]);
+    console.log(rs)
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await request.get(`/api/admin/songs/top/`);
-                setSongs(res.data);
-            } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
-            }
-        })();
-    }, [navigate]);
+    const handlePlaySingleSong = (song) => {
+        const reorderedSongs = [song, ...rs.filter((s) => s.id !== song.id)];
+        onPlaylistAction({ type: 'PLAY_SONGS', data: reorderedSongs, currentSongID: song.id });
+    };
+
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+
+        const formattedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds;
+        return `${minutes}:${formattedSeconds}`;
+    };
 
     const getPlaylists = async (index) => {
         try {
@@ -52,57 +56,6 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
         };
     }, []);
 
-    const handlePlaySingleSong = (song) => {
-        const reorderedSongs = [song, ...songs.filter((s) => s.id !== song.id)];
-        onPlaylistAction({ type: 'PLAY_SONGS', data: reorderedSongs, currentSongID: song.id });
-    };
-
-    const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-
-        const formattedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds;
-        return `${minutes}:${formattedSeconds}`;
-    };
-
-    const topArr = [
-        {
-            title: 'Top 50 Việt Nam',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topVietnam}`,
-        },
-        {
-            title: 'Top 50 global',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topGlobal}`,
-        },
-        {
-            title: 'Top 50 Year',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.top50Year}`,
-        },
-        {
-            title: 'Top 50 Morocco',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topMorocco}`,
-        },
-        {
-            title: 'Top 50 India',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topIndia}`,
-        },
-        {
-            title: 'Top 50 Canada',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topCanada}`,
-        },
-        {
-            title: 'Top 50 NewZealand',
-            subtitle: 'Ra mắt sắp tới',
-            image: `${images.topNewZealand}`,
-        },
-    ];
-
     const handleCreatePlaylist = async (song_id) => {
         setActiveMenuIndex(null);
         try {
@@ -116,7 +69,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            const playlistId = res.data.id; 
+            const playlistId = res.data.id;
             await onPlaylistAction('Playlist added');
             await handleAddToExistingPlaylist(playlistId, song_id);
             toast.success('Danh sách phát đã được thêm thành công');
@@ -139,7 +92,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
     };
 
     return (
-        <div className={cx('main-content')}>
+        <div className={cx('container')} aria-label="Playlist Danh sách phát của tôi #1" role="main">
             <ToastContainer
                 position="top-right"
                 autoClose={3000}
@@ -152,21 +105,9 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                 pauseOnHover
                 theme="light"
             />
-            <div className={cx('section')}>
-                <h2>Danh sách đứng đầu</h2>
-                <div className={cx('items')}>
-                    {topArr.map((item) => (
-                        <div className={cx('item')} key={item.title}>
-                            <img alt="" height="150" src={item.image} width="150" />
-                            <div className={cx('title')}>{item.title}</div>
-                            <div className={cx('subtitle')}>{item.subtitle}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className={cx('section')}>
-                <h2>Những bài hát có nhiều lượt nghe nhất</h2>
-                {songs.length > 0 && (
+            <section className={cx('search-section')} aria-label="Search content for playlist">
+                <h2>Kết quả tìm kiếm</h2>
+                {rs.length > 0 && (
                     <div aria-label="Music list" className={cx('table-music')} role="table">
                         <table>
                             <thead>
@@ -180,7 +121,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {songs.map((song, index) => (
+                                {rs.map((song, index) => (
                                     <tr key={song.id}>
                                         <td
                                             className={cx('song-title', {
@@ -253,12 +194,10 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                         </table>
                     </div>
                 )}
-            </div>
-            <div className={cx('section')}>
                 <Footer />
-            </div>
+            </section>
         </div>
     );
 };
 
-export default Home;
+export default SearchResults;

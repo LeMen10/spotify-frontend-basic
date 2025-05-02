@@ -23,22 +23,24 @@
 .header .search-bar {
     display: flex;
     align-items: center;
-    background-color: #333333;
-    padding: 8px;
+    background-color: #1f1f1f;
+    padding: 8px 18px;
     border-radius: 20px;
     width: 330px;
+    position: relative;
 }
 
 .header .search-bar input {
     border: none;
     background: none;
-    color: #FFFFFF;
-    margin-left: 10px;
+    color: #b3b3b3;
+    margin-left: 12px;
     width: 100%;
 }
 
 .header .search-bar input::placeholder {
-    color: #B3B3B3;
+    color: #b3b3b3;
+    font-size: 14px;
 }
 
 .header .actions {
@@ -148,4 +150,22 @@
 .logged img{
     width: 32px;
 
+}
+
+.clear-btn {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+}
+
+.clear-btn:hover {
+    color: white;
+    cursor: pointer;
 }

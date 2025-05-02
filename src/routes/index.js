@@ -1,14 +1,16 @@
 // import Message from "~/pages/Message/Message"
 import Home from "~/pages/Home/Home"
 import Login from "~/pages/Login/Login"
-import Playlist from "~/pages/Playlist/Playlist"
+import MomoResultPage from "~/pages/MomoResultPage/MomoResultPage"
 import Register from "~/pages/Register/Register"
+import SearchResults from "~/pages/SearchResults/SearchResults"
 
 const publicRouter = [
     {path: '/login', component: Login, layout: null},
     {path: '/', component: Home},
     {path: '/register', component: Register, layout: null},
-    {path: '/playlist/:id', component: Playlist},
+    {path: '/momo', component: MomoResultPage, layout: null},
+    {path: '/search', component: SearchResults},
 ]
 
 const privateRouter = [
