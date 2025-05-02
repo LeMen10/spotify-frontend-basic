@@ -13,13 +13,22 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
     const [user, setUser] = useState();
     const [searchTerm, setSearchTerm] = useState('');
     const location = useLocation();
+    const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+
+    const handleOpenPremiumPopup = () => {
+        setShowPremiumPopup(true);
+    };
+
+    const handleClosePremiumPopup = () => {
+        setShowPremiumPopup(false);
+    };
 
     useEffect(() => {
         (async () => {
             try {
                 const res = await request.get(`/api/user/get-user`);
                 setUser(res.data.user);
-            } catch (error) {}
+            } catch (error) { }
         })();
     }, [navigate]);
 
@@ -66,6 +75,12 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
 
     return (
         <>
+            {showPremiumPopup && (
+                <PopupPremium
+                    onClose={handleClosePremiumPopup}
+                    userId={user?.id} // Truyền user ID vào PopupPremium
+                />
+            )}
             <div className={cx('header')}>
                 <div className={cx('logo')} onClick={() => navigate('/')}>
                     <h1>Spotify</h1>
@@ -90,7 +105,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                         </button>
                     </div>
                     <div className={cx('actions')}>
-                        <button>Khám phá Premium</button>
+                        {!(user?.isPremium) && (<button onClick={handleOpenPremiumPopup}>Khám phá Premium</button>)}
                         {user && (
                             <div className={cx('user')}>
                                 <span className={cx('logged')}>{user.username[0].toUpperCase()}</span>
