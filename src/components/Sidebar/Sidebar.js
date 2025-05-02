@@ -5,6 +5,7 @@ import * as request from '~/utils/request';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { PlusIcon, MusicIcon } from '~/components/Icons';
+import Cookies from 'js-cookie';
 
 const cx = classNames.bind(styles);
 
@@ -14,22 +15,23 @@ const Sidebar = ({ onPlaylistAction, playlists }) => {
 
     const handleAddDefaultPlaylist = async () => {
         try {
+            const token = Cookies.get('token');
             const formData = new FormData();
             formData.append('name', `Danh sách phát của tôi #${playlists.length + 1}`);
 
             const res = await request.post('/api/playlists/add-playlist', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
             });
             onPlaylistAction('Playlist added');
-            toast.success('Playlist added successfully');
+            toast.success('Danh sách phát đã được thêm thành công');
             navigate(`/playlist/${res.id}`);
         } catch (error) {
             console.error('Error adding playlist:', error);
-            if (error.response?.status === 401) {
-                navigate('/login');
-            } else {
-                toast.error('Failed to add playlist. Please try again.');
-            }
+            if (error.response?.status === 401) navigate('/login');
+            else toast.error('Không thêm được danh sách phát. Vui lòng thử lại.');
         }
     };
 
@@ -48,7 +50,6 @@ const Sidebar = ({ onPlaylistAction, playlists }) => {
                 theme="light"
             />
             <div className={cx('playlist')}>
-
                 <div className={cx('library')}>
                     <div className={cx('title-library')}>
                         <h3>Thư viện</h3>

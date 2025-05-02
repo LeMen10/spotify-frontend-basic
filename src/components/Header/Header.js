@@ -5,6 +5,7 @@ import request from '~/utils/request';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { SearchIcon } from '../Icons';
+import PopupPremium from '../PopupPremium/PopupPremium';
 
 const cx = classNames.bind(styles);
 

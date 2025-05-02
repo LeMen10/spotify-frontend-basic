@@ -23,11 +23,9 @@ const DefaultLayout = ({ children }) => {
     const [currentSongID, setCurrentSongID] = useState(null);
     const token = Cookies.get('token');
 
-    console.log(currentSongID);
-
     const fetchPlaylists = async () => {
         try {
-            const res = await request.get('/api/playlists/get-playlists');
+            const res = await request.get('/api/playlists/get-playlist-by-limit');
             setPlaylists(res.data);
         } catch (error) {
             console.error('Error fetching playlists:', error);
@@ -37,7 +35,6 @@ const DefaultLayout = ({ children }) => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsLoading(false);
-
             if (token) fetchPlaylists();
         }, 1000);
 
@@ -45,7 +42,6 @@ const DefaultLayout = ({ children }) => {
     }, [token]);
 
     const handlePlaylistAction = (action) => {
-        console.log('Message from Playlist:', action);
         fetchPlaylists();
         if (action.type === 'PLAY_SONGS' || action.type === 'PLAY_SINGLE_SONG') {
             setSongs(action.data);

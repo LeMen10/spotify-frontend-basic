@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as request from '~/utils/request';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
+import Footer from '~/components/Footer/Footer';
 
 const cx = classNames.bind(styles);
 
@@ -171,7 +172,7 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
         } catch (error) {
             console.error('Error fetching songs:', error);
             if (error.response.status === 401) navigate('/login');
-            if (error.response.status === 400) toast.warning('Song is already in the list');
+            if (error.response.status === 400) toast.warning('Bài hát đã có trong danh sách.');
         }
     };
 
@@ -282,13 +283,13 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
 
                         <section className={cx('search-section')} aria-label="Search content for playlist">
                             <div className={cx('actions-bar')}>
-                                <div className={cx('pause-music-icon')}>
-                                    {songOfPlaylist.length > 0 && (
+                                {songOfPlaylist.length > 0 && (
+                                    <div className={cx('pause-music-icon')}>
                                         <div className={cx('play-music-btn')} onClick={() => handlePlayClick()}>
                                             Phát tất cả
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                                 <div className={cx('ellipsis-vertical-icon')} onClick={() => setStateMenu(true)}>
                                     <EllipsisVerticalIcon />
                                 </div>
@@ -435,6 +436,8 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                                     ))}
                                 </div>
                             )}
+
+                            <Footer />
                         </section>
 
                         {/* update */}
