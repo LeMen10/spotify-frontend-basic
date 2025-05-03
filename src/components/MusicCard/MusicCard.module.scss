@@ -8,7 +8,7 @@
     color: #fff;
     position: fixed;
     bottom: 0;
-    height: 66px;
+    height: var(--height-music-card);
     z-index: 999;
 }
 .song-info-wr {

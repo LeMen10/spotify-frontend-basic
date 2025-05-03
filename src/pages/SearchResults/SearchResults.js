@@ -22,7 +22,7 @@ const SearchResults = ({ onPlaylistAction, currentSongID }) => {
 
     const handlePlaySingleSong = (song) => {
         const reorderedSongs = [song, ...rs.filter((s) => s.id !== song.id)];
-        onPlaylistAction({ type: 'PLAY_SONGS', data: reorderedSongs, currentSongID: song.id });
+        onPlaylistAction({ type: 'PLAY_SINGLE_SONG', data: reorderedSongs, currentSongID: song.id });
     };
 
     const formatTime = (seconds) => {
@@ -39,7 +39,7 @@ const SearchResults = ({ onPlaylistAction, currentSongID }) => {
             setPlaylists(res.data);
             setActiveMenuIndex(index);
         } catch (error) {
-            console.error('Error fetching playlists:', error);
+            if (error.response?.status === 401) navigate('/login');
         }
     };
 

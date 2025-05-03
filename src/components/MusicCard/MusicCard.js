@@ -8,29 +8,64 @@ import * as request from '~/utils/request';
 
 const cx = classNames.bind(styles);
 
-const MusicCard = ({ songs, onSongChange }) => {
+const MusicCard = ({ songs, onSongChange, currentSongID }) => {
     const [currentSong, setCurrentSong] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.6);
     const audioRef = useRef(null);
-    console.log(songs);
-
+    console.log(songs)
     useEffect(() => {
-        if (songs.length > 0) {
-            setCurrentSong(songs[0]);
-            setIsPlaying(true);
-        } else {
-            setCurrentSong(null);
+        if (songs.length === 0) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
             setIsPlaying(false);
+            setCurrentSong(null);
+            setDuration(0);
+            return;
         }
-    }, [songs]);
+
+        const selectedSong = songs.find((song) => song.id === currentSongID) || songs[0];
+        if (selectedSong && selectedSong.id !== currentSong?.id) {
+            setCurrentSong(selectedSong);
+            setIsPlaying(true);
+            onSongChange(selectedSong);
+        }
+    }, [songs, currentSongID, currentSong?.id, onSongChange]);
 
     useEffect(() => {
-        if (currentSong && onSongChange) {
-            onSongChange(currentSong);
-        }
-    }, [currentSong, onSongChange]);
+        if (!currentSong || !audioRef.current) return;
+
+        const audio = audioRef.current;
+        audio.src = currentSong.audio_url;
+        audio.load();
+
+        const playAudio = () => {
+            if (isPlaying) {
+                audio
+                    .play()
+                    .then(() => console.log('Playing:', currentSong.title))
+                    .catch((e) => {
+                        console.error('Play error:', e);
+                        setIsPlaying(false);
+                    });
+            }
+        };
+
+        const onLoadedMetadata = () => {
+            setDuration(audio.duration || 0);
+        };
+
+        audio.addEventListener('canplay', playAudio);
+        audio.addEventListener('loadedmetadata', onLoadedMetadata);
+
+        return () => {
+            audio.removeEventListener('canplay', playAudio);
+            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+        };
+    }, [currentSong, isPlaying]);
 
     const togglePlay = useCallback(() => {
         if (!audioRef.current) return;
@@ -44,7 +79,6 @@ const MusicCard = ({ songs, onSongChange }) => {
                 playPromise
                     .then(() => setIsPlaying(true))
                     .catch((e) => {
-                        console.error('Play failed:', e);
                         setIsPlaying(false);
                     });
             }
@@ -56,17 +90,21 @@ const MusicCard = ({ songs, onSongChange }) => {
 
         const currentIndex = songs.findIndex((song) => song.id === currentSong.id);
         const nextIndex = (currentIndex + 1) % songs.length;
+        const nextSong = songs[nextIndex];
         setCurrentSong(songs[nextIndex]);
         setIsPlaying(true);
-    }, [songs, currentSong]);
+        onSongChange(nextSong);
+    }, [songs, currentSong, onSongChange]);
 
     const playPrev = useCallback(() => {
         if (!songs.length) return;
         const currentIndex = songs.findIndex((song) => song.id === currentSong?.id);
         const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
+        const prevSong = songs[prevIndex];
         setCurrentSong(songs[prevIndex]);
         setIsPlaying(true);
-    }, [songs, currentSong]);
+        onSongChange(prevSong);
+    }, [songs, currentSong, onSongChange]);
 
     const handleSeek = useCallback((e) => {
         const newTime = parseFloat(e.target.value);
@@ -80,42 +118,6 @@ const MusicCard = ({ songs, onSongChange }) => {
         audioRef.current.volume = newVolume;
         setVolume(newVolume);
     }, []);
-
-    useEffect(() => {
-        if (!audioRef.current || !currentSong) return;
-
-        const audio = audioRef.current;
-        audio.src = currentSong.audio_url;
-        audio.load();
-        // setCurrentTime(0);
-
-        const onLoadedMetadata = () => {
-            setDuration(audio.duration || 0);
-        };
-        audio.addEventListener('loadedmetadata', onLoadedMetadata);
-        return () => {
-            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-        };
-    }, [currentSong]);
-
-    useEffect(() => {
-        if (!audioRef.current) return;
-
-        const audio = audioRef.current;
-        const onCanPlay = () => {
-            if (isPlaying) {
-                audio.play().catch((e) => {
-                    console.error('Error playing audio:', e);
-                    setIsPlaying(false);
-                });
-            }
-        };
-
-        audio.addEventListener('canplay', onCanPlay);
-        return () => {
-            audio.removeEventListener('canplay', onCanPlay);
-        };
-    }, [isPlaying]);
 
     const handleSongEnd = useCallback(async () => {
         if (currentSong) {
