@@ -90,10 +90,10 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                     await res.json();
                 }
             } catch (error) {
-                console.error('Lỗi kết nối:', error);
+                if (error.response?.status === 500) navigate('/login');
             }
         } catch (error) {
-            console.error('Error updating playlist:', error);
+            if (error.response?.status === 401) navigate('/login');
         }
     };
 
@@ -114,7 +114,7 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
             onPlaylistAction('Delete');
             navigate('/');
         } catch (error) {
-            console.error('Error fetching playlists:', error);
+            if (error.response?.status === 401) navigate('/login');
         }
     };
 
@@ -124,9 +124,8 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
         (async () => {
             try {
                 const res = await request.get(`/api/songs/search?query=${encodeURIComponent(debouncedSearch)}`);
-                setSongQuery(res.data);
+                setSongQuery(res);
             } catch (error) {
-                console.error('Error fetching songs:', error);
                 if (error.response?.status === 401) navigate('/login');
             }
         })();
@@ -151,16 +150,6 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
         setSongQuery([]);
     };
 
-    const getSongOfPlaylist = async () => {
-        try {
-            const res = await request.get(`/api/playlist/get-songs/${id}`);
-            setSongOfPlaylist(res);
-        } catch (error) {
-            console.error('Error fetching songs:', error);
-            if (error.response.status === 401) navigate('/login');
-        }
-    };
-
     const addSongToPlaylist = async (songId) => {
         const data = {
             playlist_id: id,
@@ -168,7 +157,9 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
         };
         try {
             await request.post(`/api/playlist/add-song/`, data);
-            getSongOfPlaylist();
+            const updatedSongs = await request.get(`/api/playlist/get-songs/${id}`);
+            setSongOfPlaylist(updatedSongs);
+            onPlaylistAction({ type: 'UPDATE_SONG_LIST', data: updatedSongs });
         } catch (error) {
             console.error('Error fetching songs:', error);
             if (error.response.status === 401) navigate('/login');
@@ -213,7 +204,6 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
 
     // delete song from playlist
     const handleDeleteSong = async (songId) => {
-        console.log(id, songId);
         try {
             await request.delete_method(`/api/playlist/remove-song/`, {
                 data: { playlist_id: id, song_id: songId },
@@ -222,7 +212,6 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
             setSongOfPlaylist(res);
             onPlaylistAction({ type: 'UPDATE_SONG_LIST', data: res });
         } catch (error) {
-            console.error('Error deleting song from playlist:', error);
             if (error.response.status === 401) navigate('/login');
         }
     };
@@ -334,6 +323,7 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                                                         className={cx('song-title', {
                                                             active: currentSongID === song.id,
                                                         })}
+                                                        onClick={() => handlePlaySingleSong(song)}
                                                     >
                                                         {index + 1}
                                                     </td>
@@ -355,7 +345,10 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                                                                 >
                                                                     {song.title}
                                                                 </span>
-                                                                <span className={cx('song-artist')}>
+                                                                <span
+                                                                    className={cx('song-artist')}
+                                                                    onClick={() => handlePlaySingleSong(song)}
+                                                                >
                                                                     {song.artist_info.name}
                                                                 </span>
                                                             </div>

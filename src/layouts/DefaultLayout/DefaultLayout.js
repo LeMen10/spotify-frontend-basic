@@ -43,14 +43,26 @@ const DefaultLayout = ({ children }) => {
 
     const handlePlaylistAction = (action) => {
         fetchPlaylists();
-        if (action.type === 'PLAY_SONGS' || action.type === 'PLAY_SINGLE_SONG') {
+        if (action.type === 'PLAY_SONGS') {
             setSongs(action.data);
+            // Nếu có chỉ định bài hát cụ thể thì phát bài đó
             if (action.currentSongID) setCurrentSongID(action.currentSongID);
-        } else if (action.type === 'UPDATE_SONG_LIST') {
-            if (action.data.find((song) => song.id === currentSongID)) setSongs(action.data);
             else {
-                setSongs([]);
-                setCurrentSongID(null);
+                // Không thì phát bài đầu tiên
+                setCurrentSongID(action.data[0]?.id || null);
+            }
+        } else if (action.type === 'PLAY_SINGLE_SONG') {
+            // Đặc biệt xử lý khi chọn phát 1 bài cụ thể
+            setSongs(action.data);
+            setCurrentSongID(action.currentSongID); // Luôn cập nhật ID bài được chọn
+        } else if (action.type === 'UPDATE_SONG_LIST') {
+            // Khi thêm/xóa bài (không đổi bài đang phát)
+            const currentExists = action.data.some((song) => song.id === currentSongID);
+            setSongs(action.data);
+
+            // Chỉ reset nếu bài hiện tại bị xóa
+            if (!currentExists) {
+                setCurrentSongID(action.data[0]?.id || null);
             }
         }
     };
@@ -69,10 +81,12 @@ const DefaultLayout = ({ children }) => {
                 isLoading === false && (
                     <div className={cx('wrapper')}>
                         {!token && <Welcome />}
-                        <Header
-                            setCheckOnClickChat={setCheckOnClickChat}
-                            setCheckOnClickChatGemini={setCheckOnClickChatGemini}
-                        />
+                        <div>
+                            <Header
+                                setCheckOnClickChat={setCheckOnClickChat}
+                                setCheckOnClickChatGemini={setCheckOnClickChatGemini}
+                            />
+                        </div>
                         <div className={cx('container')}>
                             <Sidebar onPlaylistAction={handlePlaylistAction} playlists={playlists} />
                             <div className={cx('content')}>
@@ -88,7 +102,9 @@ const DefaultLayout = ({ children }) => {
                             {/* <Message setCheckOnClickChat={setCheckOnClickChat}/> */}
                             {/* <WaitingList/> */}
                         </div>
-                        <MusicCard songs={songs} onSongChange={handleSongChange} />
+                        <div>
+                            <MusicCard songs={songs} currentSongID={currentSongID} onSongChange={handleSongChange} />
+                        </div>
                     </div>
                 )
             )}
