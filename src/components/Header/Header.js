@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { SearchIcon } from '../Icons';
 import PopupPremium from '../PopupPremium/PopupPremium';
+import PremiumInfoPopup from '../PremiumInfoPopup/PremiumInfoPopup';
 
 const cx = classNames.bind(styles);
 
@@ -15,6 +16,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const location = useLocation();
     const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+    const [ShowPremiumInfoPopup, setShowPremiumInfoPopup] = useState(false);
 
     const handleOpenPremiumPopup = () => {
         setShowPremiumPopup(true);
@@ -39,6 +41,14 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
 
     const handleClickGemini = () => {
         setCheckOnClickChatGemini(() => true);
+    };
+
+    const handleClickPremiumInfo = () => {
+        setShowPremiumInfoPopup(true);
+    };
+
+    const handleClosePremiumInfo = () => {
+        setShowPremiumInfoPopup(false);
     };
 
     const handleLogout = () => {
@@ -82,6 +92,12 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                     userId={user?.id} // Truyền user ID vào PopupPremium
                 />
             )}
+            {ShowPremiumInfoPopup && (
+                <PremiumInfoPopup
+                    user={user}
+                    onClose={() => setShowPremiumInfoPopup(false)}
+                />
+            )}
             <div className={cx('header')}>
                 <div className={cx('logo')} onClick={() => navigate('/')}>
                     <h1>Spotify</h1>
@@ -113,6 +129,9 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
 
                                 <div className={cx('logged-dropdown-wrap')}>
                                     <ul className={cx('logged-dropdown-list')}>
+                                        {(user?.isPremium) && (<li onClick={handleClickPremiumInfo} className={cx('logged-dropdown-item')}>
+                                            <div className={cx('logged-dropdown-item-content')}>Premium info</div>
+                                        </li>)}
                                         <li onClick={handleClick} className={cx('logged-dropdown-item')}>
                                             <div className={cx('logged-dropdown-item-content')}>General chat </div>
                                         </li>
