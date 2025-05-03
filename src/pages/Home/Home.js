@@ -17,6 +17,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
     const [songs, setSongs] = useState([]);
     const [playlists, setPlaylists] = useState([]);
     const [activeMenuIndex, setActiveMenuIndex] = useState(null);
+    const [menuDirection, setMenuDirection] = useState('down');
 
     useEffect(() => {
         (async () => {
@@ -33,9 +34,20 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
         try {
             const res = await request.get('/api/playlists/get-playlists');
             setPlaylists(res.data);
+            const buttonElement = document.querySelectorAll('.btn-add')[index];
+            const rect = buttonElement.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const menuHeight = 210;
+
+            if (spaceBelow < menuHeight) {
+                setMenuDirection('up');
+            } else {
+                setMenuDirection('down');
+            }
+
             setActiveMenuIndex(index);
         } catch (error) {
-            console.error('Error fetching playlists:', error);
+            if (error.response?.status === 401) navigate('/login');
         }
     };
 
@@ -54,7 +66,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
 
     const handlePlaySingleSong = (song) => {
         const reorderedSongs = [song, ...songs.filter((s) => s.id !== song.id)];
-        onPlaylistAction({ type: 'PLAY_SONGS', data: reorderedSongs, currentSongID: song.id });
+        onPlaylistAction({ type: 'PLAY_SINGLE_SONG', data: reorderedSongs, currentSongID: song.id });
     };
 
     const formatTime = (seconds) => {
@@ -116,7 +128,7 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            const playlistId = res.data.id; 
+            const playlistId = res.data.id;
             await onPlaylistAction('Playlist added');
             await handleAddToExistingPlaylist(playlistId, song_id);
             toast.success('Danh sách phát đã được thêm thành công');
@@ -218,7 +230,10 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                                             </button>
                                             {activeMenuIndex === index && (
                                                 <nav
-                                                    className={cx('menu')}
+                                                    className={cx(
+                                                        'menu',
+                                                        menuDirection === 'up' ? 'menu-up' : 'menu-down',
+                                                    )}
                                                     role="menu"
                                                     aria-label="Context menu"
                                                     ref={menuRef}

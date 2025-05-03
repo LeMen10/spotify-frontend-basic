@@ -32,7 +32,7 @@
     flex: 1;
     background: none;
     border: none;
-    color: #FFFFFF;
+    color: #ffffff;
     margin-left: 10px;
     outline: none;
 }
@@ -51,7 +51,7 @@
 }
 
 .main-content .tabs .tab.active {
-    background-color: #1DB954;
+    background-color: #1db954;
 }
 
 .main-content .section {
@@ -92,7 +92,7 @@
 
 .main-content .section .item .subtitle {
     font-size: 14px;
-    color: #B3B3B3;
+    color: #b3b3b3;
 }
 
 .btn-add {
@@ -158,11 +158,22 @@
     background-color: #1a1a1a;
     border: 1px solid #333;
     border-radius: 4px;
-    overflow: hidden;
     position: absolute;
     z-index: 200;
-    top: -220%;
-    right: 0px;
+    height: 210px;
+    overflow-y: auto;
+}
+
+.menu-down {
+    top: 100%;
+    margin-top: 4px;
+    bottom: auto;
+}
+
+.menu-up {
+    bottom: 100%;
+    margin-bottom: 4px;
+    top: auto;
 }
 
 .menu-item {
