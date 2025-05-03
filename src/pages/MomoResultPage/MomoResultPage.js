@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './MomoResultPage.module.scss';
 import classNames from 'classnames/bind';
+import request from '~/utils/request';
 
 const cx = classNames.bind(styles);
 
@@ -37,24 +38,16 @@ const MomoResultPage = () => {
 
                     // 2. Update premium status on your server
                     try {
-                        const premiumResponse = await axios.post('/api/premium/activate', {
-                            user_id: accountId,
-                           
-                        }, {
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
+                        const premiumResponse = await request.post('/api/premium/activate', { user_id: accountId });
+            
                         if (premiumResponse.data.success) {
                             console.log('Premium status updated successfully');
                         } else {
                             console.error('Failed to update premium status:', premiumResponse.data.error);
-                            setStatus('Thanh toán thành công nhưng có lỗi khi kích hoạt Premium. Vui lòng liên hệ hỗ trợ.');
+                            
                         }
                     } catch (error) {
                         console.error('Error updating premium status:', error);
-                        setStatus('Thanh toán thành công nhưng có lỗi khi kích hoạt Premium. Vui lòng liên hệ hỗ trợ.');
                     }
                 } else {
                     // Payment failed

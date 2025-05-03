@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from './PopupPremium.module.scss';
 import classNames from 'classnames/bind';
 import axios from 'axios';
+import images from '~/assets/images/images';
 
 const cx = classNames.bind(styles);
 
@@ -23,49 +24,30 @@ const PopupPremium = ({ onClose, userId }) => {
         }
         setIsProcessing(true);
         setPaymentError(null);
-
+       
         try {
-            const premiumResponse = await axios.post('/api/premium/activate', {
-                user_id: userId,
-               
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+            const response = await axios.post('http://localhost:3001/payment', {
+                amount: 20000,
+                orderIdSuffix: Date.now().toString(),
+                accountId: userId || 'guest-' + Math.random().toString(36).substring(2, 9)
             });
 
-            if (premiumResponse.data.success) {
-                console.log('Premium status updated successfully');
+            if (response.data && response.data.payUrl) {
+                window.location.href = response.data.payUrl;
             } else {
-                console.error('Failed to update premium status:', premiumResponse.data.error);
-                
+                throw new Error('Không nhận được URL thanh toán từ MoMo');
             }
         } catch (error) {
-            console.error('Error updating premium status:', error);
+            console.error('Lỗi thanh toán:', error);
+            setPaymentError('Đã xảy ra lỗi khi khởi tạo thanh toán. Vui lòng thử lại sau.');
+        } finally {
+            setIsProcessing(false);
         }
-        // try {
-        //     const response = await axios.post('http://localhost:3001/payment', {
-        //         amount: 20000,
-        //         orderIdSuffix: Date.now().toString(),
-        //         accountId: userId || 'guest-' + Math.random().toString(36).substring(2, 9)
-        //     });
-
-        //     if (response.data && response.data.payUrl) {
-        //         window.location.href = response.data.payUrl;
-        //     } else {
-        //         throw new Error('Không nhận được URL thanh toán từ MoMo');
-        //     }
-        // } catch (error) {
-        //     console.error('Lỗi thanh toán:', error);
-        //     setPaymentError('Đã xảy ra lỗi khi khởi tạo thanh toán. Vui lòng thử lại sau.');
-        // } finally {
-        //     setIsProcessing(false);
-        // }
     };
 
     const premiumFeatures = [
         {
-            icon: '🎵',
+            icon: '🚫',
             title: 'Nghe nhạc không quảng cáo',
             description: 'Trải nghiệm âm nhạc liền mạch không bị gián đoạn'
         },
@@ -92,7 +74,7 @@ const PopupPremium = ({ onClose, userId }) => {
             <div className={cx('popup')}>
                 <div className={cx('header')}>
                     <div className={cx('badge')}>
-                        <span className={cx('crown-icon')}>👑</span>
+                        <span className={cx('crown-icon')}>💎</span>
                         <span>ƯU ĐÃI ĐẶC BIỆT </span>
                     </div>
                     <button className={cx('close')} onClick={onClose}>×</button>
@@ -102,9 +84,9 @@ const PopupPremium = ({ onClose, userId }) => {
                     <div className={cx('hero-section')}>
                         <div className={cx('text-content')}>
                             <h1 className={cx('heading')}>
-                                <span className={cx('highlight')}>Dùng thử Premium 2 tháng</span> chỉ với 599.000₫
+                                <span className={cx('highlight')}>Dùng thử Premium 2 tháng</span> chỉ với 20.000₫
                             </h1>
-                            <p className={cx('subtext')}>Sau đó chỉ 599.000₫/tháng. Hủy bất cứ lúc nào.</p>
+                            <p className={cx('subtext')}>Sau đó chỉ 20.000₫/tháng. Hủy bất cứ lúc nào.</p>
                             
                             <div className={cx('buttons')}>
                                 <button 
@@ -135,7 +117,7 @@ const PopupPremium = ({ onClose, userId }) => {
                         
                         <div className={cx('image-container')}>
                             <img 
-                                src="https://cdn-icons-png.flaticon.com/512/727/727218.png" 
+                                src={images.iconPremium}
                                 alt="Premium Music" 
                                 className={cx('premium-image')}
                             />
@@ -190,7 +172,7 @@ const PopupPremium = ({ onClose, userId }) => {
                     </div>
                     
                     <p className={cx('note')}>
-                        *599.000₫ cho 2 tháng, sau đó là 599.000₫/tháng. Chỉ áp dụng cho tài khoản chưa từng sử dụng gói Premium. <a href="#">Điều khoản áp dụng</a>.
+                        *20.000₫ cho 2 tháng, sau đó là 20.000₫/tháng. Chỉ áp dụng cho tài khoản chưa từng sử dụng gói Premium. <a href="#">Điều khoản áp dụng</a>.
                     </p>
                 </div>
             </div>

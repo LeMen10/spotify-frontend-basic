@@ -14,5 +14,6 @@ const images = {
     topCanada: require('~/assets/images/top-canada.png'),
     topMorocco: require('~/assets/images/top-morocco.png'),
     topNewZealand: require('~/assets/images/top-new-zealand.png'),
+    iconPremium: require('~/assets/images/music.png'),
 }
 export default images
