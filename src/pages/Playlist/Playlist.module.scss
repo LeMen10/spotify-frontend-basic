@@ -5,7 +5,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 466px;
 }
 
 .header {
@@ -675,6 +674,7 @@ tbody td {
     height: 40px;
     object-fit: cover;
     border-radius: 2px;
+    cursor: pointer;
 }
 
 .song-text {
@@ -690,6 +690,7 @@ tbody td {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
 
     &.active {
         font-weight: 700;
@@ -701,6 +702,7 @@ tbody td {
     font-weight: 400;
     font-size: 12px;
     color: #9aa3a8;
+    cursor: pointer;
 }
 
 tbody td:nth-child(3) {
