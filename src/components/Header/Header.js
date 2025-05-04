@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Header.module.scss';
 import request from '~/utils/request';
@@ -10,7 +10,7 @@ import PremiumInfoPopup from '../PremiumInfoPopup/PremiumInfoPopup';
 
 const cx = classNames.bind(styles);
 
-const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
+const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini, onPremiumStatusChange }) => {
     const navigate = useNavigate();
     const [user, setUser] = useState();
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +31,9 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
             try {
                 const res = await request.get(`/api/user/get-user`);
                 setUser(res.data.user);
-            } catch (error) { }
+            } catch (error) {
+                // if (error.response?.status === 401) navigate('/login');
+            }
         })();
     }, [navigate]);
 
@@ -47,13 +49,9 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
         setShowPremiumInfoPopup(true);
     };
 
-    const handleClosePremiumInfo = () => {
-        setShowPremiumInfoPopup(false);
-    };
-
     const handleLogout = () => {
         Cookies.remove('token');
-        localStorage.removeItem('num');
+        navigate('/login');
         window.location.reload();
     };
 
@@ -84,6 +82,45 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
         setSearchTerm('');
     };
 
+    const isPremiumActive = useCallback(() => {
+        if (!user?.isPremium) return false;
+        if (!user?.premiumDate || !user?.MonthPremium) return false;
+
+        const today = new Date();
+        const premiumDate = new Date(user.premiumDate);
+        if (isNaN(premiumDate)) return false; // check day không hợp lệ
+        // Day hết hạn: MonthPremium + premiumDate
+        const expiryDate = new Date(premiumDate);
+        expiryDate.setMonth(premiumDate.getMonth() + user.MonthPremium);
+
+        return expiryDate >= today;
+    }, [user]);
+
+    useEffect(() => {
+        if (user && user.isPremium) {
+            (async () => {
+                const isActive = isPremiumActive();
+                console.log(isActive);
+                onPremiumStatusChange(isActive); // Case còn hạn
+                // case hết hạn (false)
+                if (!isActive) {
+                    try {
+                        // Gọi API để đặt isPremium = False
+                        await request.post('/api/premium/deactivate', { user_id: user.id });
+                        // Update lại user sau khi deactivate
+                        const res = await request.get('/api/user/get-user');
+                        // setUser để run useEffect lần nữa
+                        setUser(res.data.user);
+                    } catch (error) {
+                        console.error('Error deactivating premium:', error);
+                    }
+                }
+            })();
+        } else {
+            onPremiumStatusChange(false); // Gửi false nếu không có user or isPremium = false
+        }
+    }, [user, isPremiumActive, onPremiumStatusChange]);
+
     return (
         <>
             {showPremiumPopup && (
@@ -92,12 +129,7 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                     userId={user?.id} // Truyền user ID vào PopupPremium
                 />
             )}
-            {ShowPremiumInfoPopup && (
-                <PremiumInfoPopup
-                    user={user}
-                    onClose={() => setShowPremiumInfoPopup(false)}
-                />
-            )}
+            {ShowPremiumInfoPopup && <PremiumInfoPopup user={user} onClose={() => setShowPremiumInfoPopup(false)} />}
             <div className={cx('header')}>
                 <div className={cx('logo')} onClick={() => navigate('/')}>
                     <h1>Spotify</h1>
@@ -122,16 +154,18 @@ const Header = ({ setCheckOnClickChat, setCheckOnClickChatGemini }) => {
                         </button>
                     </div>
                     <div className={cx('actions')}>
-                        {!(user?.isPremium) && (<button onClick={handleOpenPremiumPopup}>Khám phá Premium</button>)}
+                        {!isPremiumActive() && <button onClick={handleOpenPremiumPopup}>Khám phá Premium</button>}
                         {user && (
                             <div className={cx('user')}>
                                 <span className={cx('logged')}>{user.username[0].toUpperCase()}</span>
 
                                 <div className={cx('logged-dropdown-wrap')}>
                                     <ul className={cx('logged-dropdown-list')}>
-                                        {(user?.isPremium) && (<li onClick={handleClickPremiumInfo} className={cx('logged-dropdown-item')}>
-                                            <div className={cx('logged-dropdown-item-content')}>Premium info</div>
-                                        </li>)}
+                                        {user?.isPremium && (
+                                            <li onClick={handleClickPremiumInfo} className={cx('logged-dropdown-item')}>
+                                                <div className={cx('logged-dropdown-item-content')}>Premium info</div>
+                                            </li>
+                                        )}
                                         <li onClick={handleClick} className={cx('logged-dropdown-item')}>
                                             <div className={cx('logged-dropdown-item-content')}>General chat </div>
                                         </li>

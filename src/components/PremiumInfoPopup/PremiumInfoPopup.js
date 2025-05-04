@@ -10,8 +10,6 @@ const PremiumInfoPopup = ({ user, onClose }) => {
   expiryDate.setMonth(expiryDate.getMonth() + user.MonthPremium);
   
   const benefits = [
-    'Nghe nhạc không quảng cáo',
-    'Tải nhạc nghe offline',
     'Chất lượng âm thanh cao',
     'Phát nhạc mọi nơi',
     'Hỗ trợ ưu tiên'

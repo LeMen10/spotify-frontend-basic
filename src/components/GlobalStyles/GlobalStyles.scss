@@ -77,7 +77,7 @@ button,
 input {
     overflow: visible;
 }
-input:focus {
+input:focus , textarea:focus{
     outline: none;
 }
 .container_m {
@@ -180,6 +180,11 @@ input:focus {
     border-radius: 6px;
 }
 
+.auth-form__input::placeholder {
+    color: #8d8d8d;
+}
+
+
 .auth-form__aside {
     margin-top: 30px;
 }
@@ -189,6 +194,7 @@ input:focus {
     font-weight: 500;
     text-align: center;
     padding: 0 12px;
+    color: #8d8d8d;
 }
 
 .auth-form__text-link {
@@ -294,14 +300,14 @@ input:focus {
 }
 
 .btn--normal {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: #a5a4a4;
     transition: all 0.2s linear;
 }
 
 .btn--normal:hover {
     cursor: pointer;
     opacity: 1;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: #8d8d8d;;
 }
 
 .btn.btn--primary {
@@ -438,17 +444,17 @@ input:focus {
 }
 
 // pagination
-.paginationn {
+.pagination_custom {
     display: flex;
     justify-content: center;
 }
-.page-itemm {
+.page-item_custom {
     width: 40px;
     text-align: center;
     font-weight: 700;
     margin-right: 6px;
 }
-.page-linkk {
+.page-link_custom {
     transition: all 0.3s linear;
     background-color: #d7d7d7;
     border-radius: 50%;
@@ -457,13 +463,13 @@ input:focus {
     width: 100%;
     padding: 8px;
 }
-.page-itemm:hover .page-linkk {
+.page-item_custom:hover .page-link_custom {
     background-color: var(--primary-color);
     color: #fff;
     cursor: pointer;
 }
 
-.with-46 {
+.width-46 {
     width: 46%;
 }
 
@@ -491,4 +497,41 @@ input:focus {
     justify-content: center;
     align-items: center;
     height: 100%;
+}
+
+.song-info-wr{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.state-music{
+    font-size: 12px;
+    padding: 2px 6px;
+    background: #e9a20a;
+    font-weight: 700;
+    color: #ffffff;
+    border-radius: 6px;
+}
+
+.song-artist {
+    font-weight: 400;
+    font-size: 12px;
+    color: #9aa3a8;
+    cursor: pointer;
+}
+
+.song-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.song-info img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 2px;
+    cursor: pointer;
 }

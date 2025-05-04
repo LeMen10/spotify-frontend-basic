@@ -111,7 +111,7 @@ const MomoResultPage = () => {
                         {paymentInfo && (
                             <button 
                                 className={cx('action-button', 'check-premium')}
-                                onClick={() => navigate('/profile')}
+                                onClick={() => navigate('/')}
                             >
                                 Kiểm tra tài khoản Premium
                             </button>

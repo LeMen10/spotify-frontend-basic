@@ -14,7 +14,8 @@ const Login = () => {
     const [username, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
-    // const [isLoading, setIsLoading] = useState(false);
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 3);
 
     const toastCustom = (message) => {
         toast.warn(message, {
@@ -33,7 +34,7 @@ const Login = () => {
         const data = { username, password };
         try {
             const res = await axios.post(`${process.env.REACT_APP_BASE_URL}api/auth/login`, data);
-            Cookies.set('token', res.data.access_token);
+            Cookies.set('token', res.data.access_token, { expires: expirationDate });
 
             navigate('/');
             window.location.reload();
@@ -44,7 +45,7 @@ const Login = () => {
     };
 
     return (
-        <Fragment>
+        <>
             <ToastContainer
                 position="top-right"
                 hideProgressBar={false}
@@ -57,7 +58,7 @@ const Login = () => {
                 theme="light"
             />
 
-            <div className={cx('modal', 'js-modal-login')}>
+            <div className={cx('modal')}>
                 <div className={cx('modal__overlay')}>
                     <img style={{ width: '100%', height: '100%' }} src={images.f8Login} alt="" />
                 </div>
@@ -73,10 +74,10 @@ const Login = () => {
 
                             <div className={cx('auth-form__form')}>
                                 <div className={cx('auth-form__group')}>
-                                    <div className={cx('with-46')}>
+                                    <div className={cx('width-46')}>
                                         <input
                                             type="text"
-                                            placeholder="Username"
+                                            placeholder="username"
                                             name="username"
                                             className={cx('auth-form__input')}
                                             id="auth-form__user-login"
@@ -84,10 +85,10 @@ const Login = () => {
                                             onChange={(e) => setUserName(e.target.value)}
                                         />
                                     </div>
-                                    <div className={cx('with-46')}>
+                                    <div className={cx('width-46')}>
                                         <input
                                             type="password"
-                                            placeholder="Password"
+                                            placeholder="password"
                                             name="password"
                                             className={cx('auth-form__input')}
                                             id="auth-form__password-login"
@@ -127,7 +128,7 @@ const Login = () => {
                     </div>
                 </div>
             </div>
-        </Fragment>
+        </>
     );
 };
 

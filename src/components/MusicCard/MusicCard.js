@@ -5,6 +5,7 @@ import { faPause, faPlay, faBackwardStep, faForwardStep, faVolumeUp } from '@for
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ProgressBar from './ProgressBar';
 import * as request from '~/utils/request';
+import { useNavigate } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
@@ -14,7 +15,9 @@ const MusicCard = ({ songs, onSongChange, currentSongID }) => {
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.6);
     const audioRef = useRef(null);
-    console.log(songs)
+    const navigate = useNavigate();
+
+    // Đồng bộ bài hát với currentSongID
     useEffect(() => {
         if (songs.length === 0) {
             if (audioRef.current) {
@@ -35,6 +38,7 @@ const MusicCard = ({ songs, onSongChange, currentSongID }) => {
         }
     }, [songs, currentSongID, currentSong?.id, onSongChange]);
 
+    // Tải nguồn âm thanh khi currentSong thay đổi
     useEffect(() => {
         if (!currentSong || !audioRef.current) return;
 
@@ -42,30 +46,34 @@ const MusicCard = ({ songs, onSongChange, currentSongID }) => {
         audio.src = currentSong.audio_url;
         audio.load();
 
-        const playAudio = () => {
-            if (isPlaying) {
-                audio
-                    .play()
-                    .then(() => console.log('Playing:', currentSong.title))
-                    .catch((e) => {
-                        console.error('Play error:', e);
-                        setIsPlaying(false);
-                    });
-            }
-        };
-
         const onLoadedMetadata = () => {
             setDuration(audio.duration || 0);
         };
 
-        audio.addEventListener('canplay', playAudio);
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
 
         return () => {
-            audio.removeEventListener('canplay', playAudio);
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
         };
-    }, [currentSong, isPlaying]);
+    }, [currentSong]);
+
+    // Phát/tạm dừng âm thanh khi isPlaying thay đổi
+    useEffect(() => {
+        if (!audioRef.current || !currentSong) return;
+
+        const audio = audioRef.current;
+        if (isPlaying) {
+            audio
+                .play()
+                .then(() => console.log('Playing:', currentSong.title))
+                .catch((e) => {
+                    console.error('Play error:', e);
+                    setIsPlaying(false);
+                });
+        } else {
+            audio.pause();
+        }
+    }, [isPlaying, currentSong]);
 
     const togglePlay = useCallback(() => {
         if (!audioRef.current) return;
@@ -124,11 +132,11 @@ const MusicCard = ({ songs, onSongChange, currentSongID }) => {
             try {
                 await request.post(`/api/songs/${currentSong.id}/increase-play-count`);
             } catch (error) {
-                console.error('Failed to increase play count:', error);
+                if (error.response?.status === 401) navigate('/login');
             }
         }
         playNext();
-    }, [currentSong, playNext]);
+    }, [currentSong, playNext, navigate]);
 
     return (
         <div className={cx('music-player')}>

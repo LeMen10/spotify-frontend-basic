@@ -10,7 +10,7 @@ import Footer from '~/components/Footer/Footer';
 
 const cx = classNames.bind(styles);
 
-const Playlist = ({ onPlaylistAction, currentSongID }) => {
+const Playlist = ({ onPlaylistAction, currentSongID, isRegisterPremium }) => {
     const navigate = useNavigate();
     const [songQuery, setSongQuery] = useState();
     const [playlistDetail, setPlaylistDetail] = useState({});
@@ -150,7 +150,9 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
         setSongQuery([]);
     };
 
-    const addSongToPlaylist = async (songId) => {
+    const addSongToPlaylist = async (songId, isPremium) => {
+        if (!isRegisterPremium && isPremium)
+            return toast.warning('Đăng ký Premium để có thể thêm vào Playlist của bạn !!!');
         const data = {
             playlist_id: id,
             song_id: songId,
@@ -334,20 +336,26 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                                                                 height="40"
                                                                 src={song.image}
                                                                 width="40"
-                                                                onClick={() => handlePlaySingleSong(song)}
+                                                                onClick={() =>
+                                                                    handlePlaySingleSong(song, song.is_premium)
+                                                                }
                                                             />
                                                             <div className={cx('song-text')}>
                                                                 <span
                                                                     className={cx('song-title', {
                                                                         active: currentSongID === song.id,
                                                                     })}
-                                                                    onClick={() => handlePlaySingleSong(song)}
+                                                                    onClick={() =>
+                                                                        handlePlaySingleSong(song, song.is_premium)
+                                                                    }
                                                                 >
                                                                     {song.title}
                                                                 </span>
                                                                 <span
                                                                     className={cx('song-artist')}
-                                                                    onClick={() => handlePlaySingleSong(song)}
+                                                                    onClick={() =>
+                                                                        handlePlaySingleSong(song, song.is_premium)
+                                                                    }
                                                                 >
                                                                     {song.artist_info.name}
                                                                 </span>
@@ -418,10 +426,15 @@ const Playlist = ({ onPlaylistAction, currentSongID }) => {
                                                 <strong>{song.title}</strong>
                                                 <span>{song.artist_info.name}</span>
                                             </div>
-                                            <div className={cx('music-info-center')}>{song.title}</div>
+                                            {!isRegisterPremium && song.is_premium ? (
+                                                <span className={cx('state-music')}>Premium</span>
+                                            ) : (
+                                                <div className={cx('music-info-center')}>{song.title}</div>
+                                            )}
+
                                             <button
                                                 className={cx('btn-add')}
-                                                onClick={() => addSongToPlaylist(song.id)}
+                                                onClick={() => addSongToPlaylist(song.id, song.is_premium)}
                                             >
                                                 Thêm
                                             </button>
