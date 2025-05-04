@@ -12,7 +12,6 @@ const cx = className.bind(styles);
 const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     const navigate = useNavigate();
     const [user, setUser] = useState();
-    console.log(user);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [messages, setMessages] = useState([]);
     const [messageUpdated, setMessageUpdated] = useState(false);
@@ -37,7 +36,6 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
         (async () => {
             try {
                 const res = await request.get(`/api/message/get-messages-gemini`);
-                console.log(res.data.messages);
                 setMessages(res.data.messages);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
@@ -76,10 +74,8 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
     };
 
     const saveMessagesToDB = async (messages) => {
-        console.log('Lưu tin nhắn:', messages);
         try {
             const res = await request.post('/api/message/save-messages-gemini', { messages });
-            console.log('Lưu tin nhắn thành công:', res);
             setMessageUpdated((prev) => !prev);
         } catch (error) {
             console.error('Lỗi lưu tin nhắn:', error);
@@ -100,7 +96,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                 <div className={cx('main')}>
                     <div className={cx('chat-container')}>
                         <div className={cx('header')}>
-                            <span>to: Gemini</span>
+                            <span>Gemini</span>
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>

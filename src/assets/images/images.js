@@ -1,5 +1,4 @@
 const images = {
-    logo: require('~/assets/images/logo.svg').default,
     f8Login: require('~/assets/images/f8_login.png'),
     noImage: require('~/assets/images/no-image.png'),
 
@@ -15,5 +14,6 @@ const images = {
     topMorocco: require('~/assets/images/top-morocco.png'),
     topNewZealand: require('~/assets/images/top-new-zealand.png'),
     iconPremium: require('~/assets/images/music.png'),
+    logoSp: require('~/assets/images/logoSp.webp')
 }
 export default images

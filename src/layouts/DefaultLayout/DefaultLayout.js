@@ -4,14 +4,12 @@ import className from 'classnames/bind';
 import styles from './DefaultLayout.module.scss';
 import Header from '~/components/Header/Header';
 import Sidebar from '~/components/Sidebar/Sidebar';
-// import WaitingList from '~/components/WaitingList/WaitingList';
 import MusicCard from '~/components/MusicCard/MusicCard';
 import Message from '~/components/Message/Message';
 import GeminiChat from '~/components/GeminiChat/GeminiChat';
 import Welcome from '~/components/Welcome/Welcome';
 import Cookies from 'js-cookie';
 import * as request from '~/utils/request';
-// import { useState } from 'react';
 
 const cx = className.bind(styles);
 const DefaultLayout = ({ children }) => {
@@ -22,6 +20,7 @@ const DefaultLayout = ({ children }) => {
     const [songs, setSongs] = useState([]);
     const [currentSongID, setCurrentSongID] = useState(null);
     const token = Cookies.get('token');
+    const [isRegisterPremium, setIsRegisterPremium] = useState(false);
 
     const fetchPlaylists = async () => {
         try {
@@ -71,6 +70,10 @@ const DefaultLayout = ({ children }) => {
         setCurrentSongID(song.id);
     };
 
+    const handlePremiumStatusChange = (isActive) => {
+        setIsRegisterPremium(isActive);
+    };
+
     return (
         <div>
             {isLoading ? (
@@ -85,6 +88,7 @@ const DefaultLayout = ({ children }) => {
                             <Header
                                 setCheckOnClickChat={setCheckOnClickChat}
                                 setCheckOnClickChatGemini={setCheckOnClickChatGemini}
+                                onPremiumStatusChange={handlePremiumStatusChange}
                             />
                         </div>
                         <div className={cx('container')}>
@@ -93,6 +97,7 @@ const DefaultLayout = ({ children }) => {
                                 {React.cloneElement(children, {
                                     onPlaylistAction: handlePlaylistAction,
                                     currentSongID,
+                                    isRegisterPremium,
                                 })}
                             </div>
                             {checkOnClickChat && <Message setCheckOnClickChat={setCheckOnClickChat} />}

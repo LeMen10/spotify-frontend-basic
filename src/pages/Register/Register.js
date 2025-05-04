@@ -52,7 +52,6 @@ const Register = () => {
                 if (res.status === 201) navigate('/login');
             })
             .catch((error) => {
-                console.log(error.response);
                 const err = error.response.data.error;
                 if (err === 'username already exists') toastCustom('Username already exists');
             });
@@ -93,7 +92,7 @@ const Register = () => {
                                             type="text"
                                             autocomplete="off"
                                             name="fullname"
-                                            placeholder="Fullname"
+                                            placeholder="fullname"
                                             className={cx('auth-form__input')}
                                             id="auth-form__fullname"
                                             value={fullName}
@@ -196,11 +195,11 @@ const Register = () => {
                             </div>
 
                             <div className={cx('auth-form__control')}>
-                                <Link to={'/login'} className={cx('btn auth-form__control-back', 'btn--normal')}>
+                                <Link to={'/login'} className={cx('btn', 'auth-form__control-back', 'btn--normal')}>
                                     Cancel
                                 </Link>
                                 <button
-                                    className={cx('btn btn--primary', 'view-cart')}
+                                    className={cx('btn', 'btn--primary', 'view-cart')}
                                     onClick={handleSubmit}
                                     disabled={
                                         !username ||

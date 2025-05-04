@@ -172,7 +172,7 @@ const PopupPremium = ({ onClose, userId }) => {
                     </div>
                     
                     <p className={cx('note')}>
-                        *20.000₫ cho 2 tháng, sau đó là 20.000₫/tháng. Chỉ áp dụng cho tài khoản chưa từng sử dụng gói Premium. <a href="#">Điều khoản áp dụng</a>.
+                        *20.000₫ cho 2 tháng, sau đó là 20.000₫/tháng. Chỉ áp dụng cho tài khoản chưa từng sử dụng gói Premium. <p>Điều khoản áp dụng</p>.
                     </p>
                 </div>
             </div>

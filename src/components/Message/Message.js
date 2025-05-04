@@ -22,8 +22,6 @@ const Message = ({ setCheckOnClickChat }) => {
     const [selectedMessageId, setSelectedMessageId] = useState(null);
     const [conversationId, setConversationId] = useState(null);
     const [socket, setSocket] = useState();
-    console.log(messages)
-    console.log(messagesEndRef.current)
     useEffect(() => {
         const token = Cookies.get('token');
         const wsUrl = `ws://localhost:8000/ws/chat/General/`;
@@ -31,7 +29,6 @@ const Message = ({ setCheckOnClickChat }) => {
         const socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
-            console.log('WebSocket Connected');
             socket.send(
                 JSON.stringify({
                     type: 'auth',
@@ -42,7 +39,6 @@ const Message = ({ setCheckOnClickChat }) => {
         };
 
         socket.onclose = () => {
-            console.log('WebSocket Disconnected');
             setSocket(null);
         };
 
@@ -173,7 +169,7 @@ const Message = ({ setCheckOnClickChat }) => {
                 <div className={cx('main')}>
                     <div className={cx('chat-container')}>
                         <div className={cx('header')}>
-                            <span>to: General chat</span>
+                            <span>General chat</span>
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>

@@ -101,25 +101,6 @@
     }
 }
 
-.song-artist {
-    font-weight: 400;
-    font-size: 12px;
-    color: #9aa3a8;
-}
-
-.song-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.song-info img {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 2px;
-}
-
 .song-text {
     display: flex;
     flex-direction: column;
@@ -131,12 +112,14 @@
     background-color: #1a1a1a;
     border: 1px solid #333;
     border-radius: 4px;
-    overflow: hidden;
-    position: absolute;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 200;
-    top: -18%;
-    right: 0px;
-    height: 210px;
+    max-height: 292px;
+    margin: auto;
     overflow-y: auto;
 }
 

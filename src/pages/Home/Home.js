@@ -11,13 +11,13 @@ import Footer from '~/components/Footer/Footer';
 
 const cx = className.bind(styles);
 
-const Home = ({ onPlaylistAction, currentSongID }) => {
+const Home = ({ onPlaylistAction, currentSongID, isRegisterPremium }) => {
     const navigate = useNavigate();
     const menuRef = useRef(null);
     const [songs, setSongs] = useState([]);
     const [playlists, setPlaylists] = useState([]);
     const [activeMenuIndex, setActiveMenuIndex] = useState(null);
-    const [menuDirection, setMenuDirection] = useState('down');
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         (async () => {
@@ -25,25 +25,21 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
                 const res = await request.get(`/api/admin/songs/top/`);
                 setSongs(res.data);
             } catch (error) {
-                if (error.response?.status === 401) navigate('/login');
+                // if (error.response?.status === 401) navigate('/login');
+            } finally {
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 1000);
             }
         })();
     }, [navigate]);
 
-    const getPlaylists = async (index) => {
+    const getPlaylists = async (index, isPremium) => {
+        if (!isRegisterPremium && isPremium)
+            return toast.warning('Đăng ký Premium để có thể thêm vào Playlist của bạn !!!');
         try {
             const res = await request.get('/api/playlists/get-playlists');
             setPlaylists(res.data);
-            const buttonElement = document.querySelectorAll('.btn-add')[index];
-            const rect = buttonElement.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const menuHeight = 210;
-
-            if (spaceBelow < menuHeight) {
-                setMenuDirection('up');
-            } else {
-                setMenuDirection('down');
-            }
 
             setActiveMenuIndex(index);
         } catch (error) {
@@ -64,7 +60,9 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
         };
     }, []);
 
-    const handlePlaySingleSong = (song) => {
+    const handlePlaySingleSong = (song, isPremium) => {
+        if (!isRegisterPremium && isPremium)
+            return toast.warning('Đăng ký Premium để tận hưởng trọn vẹn bài hát này nhé !!!');
         const reorderedSongs = [song, ...songs.filter((s) => s.id !== song.id)];
         onPlaylistAction({ type: 'PLAY_SINGLE_SONG', data: reorderedSongs, currentSongID: song.id });
     };
@@ -151,128 +149,161 @@ const Home = ({ onPlaylistAction, currentSongID }) => {
     };
 
     return (
-        <div className={cx('main-content')}>
-            <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-            />
-            <div className={cx('section')}>
-                <h2>Danh sách đứng đầu</h2>
-                <div className={cx('items')}>
-                    {topArr.map((item) => (
-                        <div className={cx('item')} key={item.title}>
-                            <img alt="" height="150" src={item.image} width="150" />
-                            <div className={cx('title')}>{item.title}</div>
-                            <div className={cx('subtitle')}>{item.subtitle}</div>
-                        </div>
-                    ))}
+        <>
+            {isLoading ? (
+                <div className={cx('spinner-wr')}>
+                    <div className={cx('spinner')}></div>
                 </div>
-            </div>
-            <div className={cx('section')}>
-                <h2>Những bài hát có nhiều lượt nghe nhất</h2>
-                {songs.length > 0 && (
-                    <div aria-label="Music list" className={cx('table-music')} role="table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Tiêu đề</th>
-                                    <th aria-label="Duration" scope="col">
-                                        Thời lượng
-                                    </th>
-                                    <th scope="col">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {songs.map((song, index) => (
-                                    <tr key={song.id}>
-                                        <td
-                                            className={cx('song-title', {
-                                                active: currentSongID === song.id,
-                                            })}
-                                        >
-                                            {index + 1}
-                                        </td>
-                                        <td>
-                                            <div className={cx('song-info')}>
-                                                <img
-                                                    alt="Album cover showing sunset over mountains with orange sky"
-                                                    height="40"
-                                                    src={song.image}
-                                                    width="40"
-                                                    onClick={() => handlePlaySingleSong(song)}
-                                                />
-                                                <div className={cx('song-text')}>
-                                                    <span
-                                                        className={cx('song-title', {
-                                                            active: currentSongID === song.id,
-                                                        })}
-                                                        onClick={() => handlePlaySingleSong(song)}
-                                                    >
-                                                        {song.title}
-                                                    </span>
-                                                    <span className={cx('song-artist')}>{song.artist_info.name}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{formatTime(song.duration)}</td>
-                                        <td style={{ position: 'relative' }}>
-                                            <button className={cx('btn-add')} onClick={() => getPlaylists(index)}>
-                                                Thêm
-                                            </button>
-                                            {activeMenuIndex === index && (
-                                                <nav
-                                                    className={cx(
-                                                        'menu',
-                                                        menuDirection === 'up' ? 'menu-up' : 'menu-down',
-                                                    )}
-                                                    role="menu"
-                                                    aria-label="Context menu"
-                                                    ref={menuRef}
-                                                >
-                                                    <div
-                                                        className={cx('menu-item')}
-                                                        role="menuitem"
-                                                        onClick={() => handleCreatePlaylist(song.id)}
-                                                    >
-                                                        <PlusIcon />
-                                                        Thêm danh sách mới
-                                                    </div>
-                                                    {playlists.length > 0 &&
-                                                        playlists.map((item) => (
-                                                            <div
-                                                                key={item.id}
-                                                                className={cx('menu-item')}
-                                                                role="menuitem"
-                                                                onClick={() =>
-                                                                    handleAddToExistingPlaylist(item.id, song.id)
-                                                                }
-                                                            >
-                                                                {item.name}
-                                                            </div>
-                                                        ))}
-                                                </nav>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            ) : (
+                <div className={cx('main-content')}>
+                    <ToastContainer
+                        position="top-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="light"
+                    />
+                    <div className={cx('section')}>
+                        <h2>Danh sách đứng đầu</h2>
+                        <div className={cx('items')}>
+                            {topArr.map((item) => (
+                                <div className={cx('item')} key={item.title}>
+                                    <img alt="" height="150" src={item.image} width="150" />
+                                    <div className={cx('title')}>{item.title}</div>
+                                    <div className={cx('subtitle')}>{item.subtitle}</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                )}
-            </div>
-            <div className={cx('section')}>
-                <Footer />
-            </div>
-        </div>
+                    <div className={cx('section')}>
+                        <h2>Những bài hát có nhiều lượt nghe nhất</h2>
+                        {songs.length > 0 && (
+                            <div aria-label="Music list" className={cx('table-music')} role="table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Tiêu đề</th>
+                                            <th aria-label="Duration" scope="col">
+                                                Thời lượng
+                                            </th>
+                                            <th scope="col">Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {songs.map((song, index) => (
+                                            <tr key={song.id}>
+                                                <td
+                                                    className={cx('song-title', {
+                                                        active: currentSongID === song.id,
+                                                    })}
+                                                >
+                                                    {index + 1}
+                                                </td>
+                                                <td>
+                                                    <div className={cx('song-info-wr')}>
+                                                        <div className={cx('song-info')}>
+                                                            <img
+                                                                alt="Album cover showing sunset over mountains with orange sky"
+                                                                height="40"
+                                                                src={song.image}
+                                                                width="40"
+                                                                onClick={() =>
+                                                                    handlePlaySingleSong(song, song.is_premium)
+                                                                }
+                                                            />
+                                                            <div className={cx('song-text')}>
+                                                                <span
+                                                                    className={cx('song-title', {
+                                                                        active: currentSongID === song.id,
+                                                                    })}
+                                                                    onClick={() =>
+                                                                        handlePlaySingleSong(song, song.is_premium)
+                                                                    }
+                                                                >
+                                                                    {song.title}
+                                                                </span>
+                                                                <span
+                                                                    className={cx('song-artist')}
+                                                                    onClick={() =>
+                                                                        handlePlaySingleSong(song, song.is_premium)
+                                                                    }
+                                                                >
+                                                                    {song.artist_info.name}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {!isRegisterPremium && song.is_premium && (
+                                                            <span className={cx('state-music')}>Premium</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td>{formatTime(song.duration)}</td>
+                                                <td>
+                                                    <button
+                                                        className={cx('btn-add')}
+                                                        onClick={() => getPlaylists(index, song.is_premium)}
+                                                    >
+                                                        Thêm
+                                                    </button>
+
+                                                    {activeMenuIndex === index && (
+                                                        <div className={cx('modal')}>
+                                                            <div className={cx('modal__overlay')}></div>
+                                                            <div className={cx('modal__body')}>
+                                                                <nav
+                                                                    className={cx('menu')}
+                                                                    role="menu"
+                                                                    aria-label="Context menu"
+                                                                    ref={menuRef}
+                                                                >
+                                                                    <div
+                                                                        className={cx('menu-item')}
+                                                                        role="menuitem"
+                                                                        onClick={() => handleCreatePlaylist(song.id)}
+                                                                    >
+                                                                        <PlusIcon />
+                                                                        Thêm danh sách mới
+                                                                    </div>
+                                                                    {playlists.length > 0 &&
+                                                                        playlists.map((item) => (
+                                                                            <div
+                                                                                key={item.id}
+                                                                                className={cx('menu-item')}
+                                                                                role="menuitem"
+                                                                                onClick={() =>
+                                                                                    handleAddToExistingPlaylist(
+                                                                                        item.id,
+                                                                                        song.id,
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {item.name}
+                                                                            </div>
+                                                                        ))}
+                                                                </nav>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                    <div className={cx('section')}>
+                        <Footer />
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
