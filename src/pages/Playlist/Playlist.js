@@ -7,6 +7,8 @@ import * as request from '~/utils/request';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import Footer from '~/components/Footer/Footer';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const cx = classNames.bind(styles);
 
@@ -71,26 +73,26 @@ const Playlist = ({ onPlaylistAction, currentSongID, isRegisterPremium }) => {
 
     const handleSavePlaylist = async () => {
         try {
+            const token = Cookies.get('token');
             const formData = new FormData();
             formData.append('name', playlistData.name);
             formData.append('description', playlistData.description);
             if (selectedImage) formData.append('image', selectedImage);
 
             try {
-                const res = await fetch(`${process.env.REACT_APP_BASE_URL}api/playlists/update-playlist/${id}`, {
-                    method: 'PUT',
-                    body: formData,
+                await axios.put(`${process.env.REACT_APP_BASE_URL}api/playlists/update-playlist/${id}`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
-                if (res.ok) {
-                    setOpenModal(false);
-                    const updatedRes = await request.get(`/api/playlists/get-playlist/${id}`);
-                    setPlaylistDetail(updatedRes);
-                    onPlaylistAction('Update');
-                } else {
-                    await res.json();
-                }
+
+                setOpenModal(false);
+                const updatedRes = await request.get(`/api/playlists/get-playlist/${id}`);
+                setPlaylistDetail(updatedRes);
+                onPlaylistAction('Update');
             } catch (error) {
-                if (error.response?.status === 500) navigate('/login');
+                if (error.response?.status === 401) navigate('/login');
             }
         } catch (error) {
             if (error.response?.status === 401) navigate('/login');

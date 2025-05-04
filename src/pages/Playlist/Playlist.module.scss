@@ -100,7 +100,7 @@
 .ellipsis-vertical-icon {
     cursor: pointer;
 }
-.actions-bar{
+.actions-bar {
     position: relative;
 }
 
@@ -492,11 +492,18 @@
     gap: 12px;
 }
 
+.inputs input {
+    background-color: #2a2a2a;
+    padding: 8px 12px;
+    color: #7a7a7a;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
 .inputs textarea {
     font-size: 13px;
     font-weight: 500;
 }
-
 
 input[type='text']::placeholder {
     color: #666666;
@@ -704,7 +711,7 @@ tbody td {
 //     color: #9aa3a8;
 //     cursor: pointer;
 // }
-.state-music{
+.state-music {
     font-size: 12px;
     padding: 2px 6px;
     background: #e9a20a;
