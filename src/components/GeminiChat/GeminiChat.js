@@ -51,16 +51,39 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
     }, [messages]);
 
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await request.get(`/api/songs/get-songs`);
+                console.log(res);
+                JSON.stringify(res.data);
+            } catch (error) {
+                // if (error.response?.status === 401) navigate('/login');
+            }
+        })();
+    }, []);
+
+    const getSongs = async () => {
+        try {
+            const res = await request.get(`/api/songs/get-songs`);
+            console.log(res);
+            return JSON.stringify(res.data);
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+        }
+    };
+
     const API_URL =
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBPB_46tPAls-foDHYB87dfpj6jtNV6-Bw';
 
     const sendMessage = async () => {
+        const data = await getSongs();
         const newMessages = [{ sender: parseInt(user.id), content: messageContent.trim() }];
         setMessageContent('');
 
         try {
             const response = await axios.post(API_URL, {
-                contents: [{ parts: [{ text: messageContent }] }],
+                contents: [{ parts: [{ text: messageContent + ' ' + data }] }],
             });
 
             const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'Lỗi';
@@ -68,17 +91,16 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
 
             await saveMessagesToDB(updatedMessages);
         } catch (error) {
-            console.error('Lỗi gọi API Gemini:', error);
             setMessages([...newMessages, { sender: 'Gemini', content: 'Lỗi khi gửi tin nhắn.' }]);
         }
     };
 
     const saveMessagesToDB = async (messages) => {
         try {
-            const res = await request.post('/api/message/save-messages-gemini', { messages });
+            await request.post('/api/message/save-messages-gemini', { messages });
             setMessageUpdated((prev) => !prev);
         } catch (error) {
-            console.error('Lỗi lưu tin nhắn:', error);
+            if (error.response?.status === 401) navigate('/login');
         }
     };
 
@@ -100,26 +122,9 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>
-                            {isLoadingMessages && (
-                                <div className={cx('spinner-wr')}>
-                                    <div className={cx('spinner')}></div>
-                                </div>
-                            )}
-                            {!messages.length ? (
-                                <div className={cx('no-message')}>
-                                    <span>Tôi có thể giúp được gì cho bạn ??</span>
-                                </div>
-                            ) : (
+                            {!messages.length &&
                                 messages.map((msg) => (
                                     <div key={msg.id} onClick={() => handleSelectMessage(msg.id)}>
-                                        {/* {selectedMessageId === msg.id && (
-                                            <span className={cx('timestamp')}>
-                                                {new Date(msg.timestamp).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
-                                            </span>
-                                        )} */}
                                         <div
                                             className={cx(
                                                 'message',
@@ -140,8 +145,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                                             )}
                                         </div>
                                     </div>
-                                ))
-                            )}
+                                ))}
                             <div ref={messagesEndRef}></div>
                         </div>
 
