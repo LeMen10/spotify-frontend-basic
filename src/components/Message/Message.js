@@ -22,6 +22,7 @@ const Message = ({ setCheckOnClickChat }) => {
     const [selectedMessageId, setSelectedMessageId] = useState(null);
     const [conversationId, setConversationId] = useState(null);
     const [socket, setSocket] = useState();
+
     useEffect(() => {
         const token = Cookies.get('token');
         const wsUrl = `ws://localhost:8000/ws/chat/General/`;
@@ -56,7 +57,7 @@ const Message = ({ setCheckOnClickChat }) => {
 
         const handleSocketMessage = (event) => {
             const data = JSON.parse(event.data);
-            if (JSON.parse(event.data).error === "Missing required fields in message data") return
+            if (JSON.parse(event.data).error === 'Missing required fields in message data') return;
             setMessages((prev) => [
                 ...prev,
                 {
@@ -82,16 +83,12 @@ const Message = ({ setCheckOnClickChat }) => {
             try {
                 const res = await request.get(`/api/message/get-messages-general-chat`);
                 setMessages(res.data.messages);
-                setTimeout(() => {
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }, 100);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
             } finally {
                 setTimeout(() => {
                     setIsLoadingMessages(false);
-                }, 2000);
-                
+                }, 1000);
             }
         })();
     }, [navigate]);
@@ -113,8 +110,6 @@ const Message = ({ setCheckOnClickChat }) => {
             } catch (error) {}
         })();
     }, []);
-
-
 
     const sendMessage = async () => {
         if (showEmojiPicker) setShowEmojiPicker(false);
@@ -162,6 +157,14 @@ const Message = ({ setCheckOnClickChat }) => {
     const closeMessage = () => {
         setCheckOnClickChat((prev) => !prev);
     };
+
+    useEffect(() => {
+        if (!isLoadingMessages) {
+            requestAnimationFrame(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+            });
+        }
+    }, [messages, isLoadingMessages]);
 
     return (
         <div className={cx('wrapper')}>
@@ -216,7 +219,7 @@ const Message = ({ setCheckOnClickChat }) => {
                                 ))
                             )}
 
-                            <div ref={messagesEndRef} style={{ float: "left", clear: "both" }}></div>
+                            <div ref={messagesEndRef}></div>
                         </div>
 
                         <div className={cx('input-container')}>
