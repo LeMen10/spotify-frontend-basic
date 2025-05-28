@@ -26,7 +26,7 @@ const PopupPremium = ({ onClose, userId }) => {
         setPaymentError(null);
        
         try {
-            const response = await axios.post('http://localhost:3001/payment', {
+            const response = await axios.post(`${process.env.MOMO_SERVER}/payment`, {
                 amount: 20000,
                 orderIdSuffix: Date.now().toString(),
                 accountId: userId || 'guest-' + Math.random().toString(36).substring(2, 9)
