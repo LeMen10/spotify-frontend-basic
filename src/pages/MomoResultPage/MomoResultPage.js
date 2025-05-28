@@ -22,7 +22,7 @@ const MomoResultPage = () => {
         const verifyPayment = async () => {
             try {
                 // 1. First verify the payment with MoMo
-                const paymentResponse = await axios.post('http://localhost:3001/check-status-transaction', {
+                const paymentResponse = await axios.post(`${process.env.MOMO_SERVER}/check-status-transaction`, {
                     orderId: `MOMO${orderId}`
                 });
 

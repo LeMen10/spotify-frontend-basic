@@ -36,13 +36,10 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
         (async () => {
             try {
                 const res = await request.get(`/api/message/get-messages-gemini`);
+                console.log(res)
                 setMessages(res.data.messages);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
-            } finally {
-                setTimeout(() => {
-                    setIsLoadingMessages(false);
-                }, 2000);
             }
         })();
     }, [navigate, messageUpdated]);
@@ -55,7 +52,6 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
         (async () => {
             try {
                 const res = await request.get(`/api/songs/get-songs`);
-                console.log(res);
                 JSON.stringify(res.data);
             } catch (error) {
                 // if (error.response?.status === 401) navigate('/login');
@@ -122,7 +118,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                             <FontAwesomeIcon className={cx('faClose-message')} icon={faClose} onClick={closeMessage} />
                         </div>
                         <div className={cx('messages')}>
-                            {!messages.length &&
+                            {messages.length > 0 &&
                                 messages.map((msg) => (
                                     <div key={msg.id} onClick={() => handleSelectMessage(msg.id)}>
                                         <div
@@ -134,7 +130,7 @@ const GeminiChat = ({ setCheckOnClickChatGemini }) => {
                                             {msg.sender_id !== parseInt(user.id) ? (
                                                 <>
                                                     <span className={cx('full-name')}>
-                                                        {msg.fullname.trim().split(' ').pop()}
+                                                        {msg.username.trim().split(' ').pop()}
                                                     </span>
                                                     <div className={cx('msg-wr')}>
                                                         <span className={cx('text')}>{msg.content}</span>
